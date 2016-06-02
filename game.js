@@ -9,22 +9,145 @@ const COLOR_INFO = "#99f"
 const COLOR_WARN = "#f66"
 const COLOR_HAPPY = "#6f6"
 
+var scheduler = null;
+
 var Game = {
     display: null,
     init: function() {
         console.log("Firin' up the game");
         this.display = new ROT.Display({width: TOTAL_WIDTH,height: TOTAL_HEIGHT, fontSize: 16});
         document.getElementById("thegame").appendChild(this.display.getContainer());
-		this._generateMap();        
-        this._refresh();
-        new Message("Welcome to JOLTROGUE.  Please, enjoy the dungeon...", "#0f0");
+        this.renderStart();
+		//this._generateMap();        
+        //this._refresh();
+        //new Message("Welcome to JOLTROGUE.  Please, enjoy the dungeon...", "#0f0");
 //        this.messages.push("4My second favorite random number is " + ROT.RNG.getUniform());
 //        this.messages.push("5My second favorite random number is " + ROT.RNG.getUniform());
 
-        var scheduler = new ROT.Scheduler.Simple();
-        scheduler.add(this.player, true);
-        this.engine = new ROT.Engine(scheduler);
-        this.engine.start();
+        //scheduler = new ROT.Scheduler.Simple();
+        //scheduler.add(this.player, true);
+        //this.engine = new ROT.Engine(scheduler);
+        //this.engine.start();
+    }
+}
+
+function sleep(milliseconds) {
+  var start = new Date().getTime();
+  while(true) {
+    if ((new Date().getTime() - start) > milliseconds){
+      break;
+    }
+  }
+}
+
+var gameStarted = false;
+Game.startGame = function(e) {
+    window.removeEventListener('keydown', Game.startGame);
+    gameStarted = true;
+    Game._generateMap();        
+    Game._refresh();
+    new Message("Welcome to JOLTROGUE.  Please, enjoy the dungeon...", "#0f0");
+
+    scheduler = new ROT.Scheduler.Simple();
+    scheduler.add(Game.player, true);
+    scheduler.add(Game.paul, true);
+    Game.engine = new ROT.Engine(scheduler);
+    Game.engine.start();
+}
+
+Game.renderStart = function() {
+    this.display.clear();
+    for (var i = 30; i >= 0; i--) {
+        setTimeout(Game.drawMatrix, (30 - i) * 70, i);
+    }
+
+    var delay = 30*70;
+
+    for (var row = 0; row < TOTAL_HEIGHT; row++) {
+//        setTimeout(Game.drawMatrixLine, delay + (row+1 * 500), row);
+        setTimeout(Game.drawMatrixLine, delay + (row * 30), row);
+    }
+
+    delay += (TOTAL_HEIGHT-5) * 30;
+    setTimeout(window.addEventListener, delay+1000, 'keydown', Game.startGame);
+
+    setTimeout(Game.showStartText, delay);
+   //this.display.clear();
+    //this.blinkingCursor(0, 0, "#0f0", 10, 100);
+}
+
+Game.drawMatrixLine = function(row) {
+    for (var i = 30; i >= 0; i--) {
+        setTimeout(Game.drawSolidLine, (15-i) * 30, row, i);
+    }
+}
+
+Game.drawSolidLine = function(row, intensity) {
+    for (var col = 0; col < TOTAL_WIDTH; col++) {
+        Game.display.draw(col, row, Math.floor(ROT.RNG.getUniform() * 10).toString(), "#000", ROT.Color.toRGB([0, intensity*16, 0]));
+    }
+}
+
+Game.showStartText = function() {
+
+    var msgs = [
+      ["Welcome to JOLTROGUE.", COLOR_HAPPY],
+      [""],
+      ["Explore the dungeon...", COLOR_HAPPY],
+      ["Collect prizes...", COLOR_HAPPY],
+      ["Drink rye...", COLOR_HAPPY],
+      [""],
+      [""],
+      [""],
+      ["AVOID PAUL.", COLOR_WARN],
+      [""],
+      [""],
+      [""],
+      [""],
+      [""],
+      [""],
+      [""],
+      [""],
+      ["PRESS ANY KEY TO BEGIN.", COLOR_INFO]
+    ];
+
+    var ctr = 0;
+    for (var row = 0; row < msgs.length; row++) {
+        if (msgs[row][0] == "") continue;
+        setTimeout(drawLine, 2200 * ctr++, 10, 5 + row, msgs[row][0], msgs[row][1], row == msgs.length - 1 ? false : true);
+    }
+ 
+}
+
+drawLine = function(x, y, str, color, showCursor) {
+    if (!gameStarted) {
+        for (var i = 0; i < str.length; i++) {
+            setTimeout(drawChar, i*30, x+i, y, str[i], color);
+            setTimeout(drawChar, i*30, x+i+1, y, "", "", color);
+        }
+        if (showCursor) {
+            totalDelay = str.length * 30;
+            setTimeout(drawChar, totalDelay, x+str.length, y, "", "", color)
+            setTimeout(drawChar, totalDelay+300, x+str.length, y, "", "", "")
+            setTimeout(drawChar, totalDelay+600, x+str.length, y, "", "", color)
+            setTimeout(drawChar, totalDelay+900, x+str.length, y, "", "", "")
+            setTimeout(drawChar, totalDelay+1200, x+str.length, y, "", "", color)
+            setTimeout(drawChar, totalDelay+1500, x+str.length, y, "", "", "")
+        }
+    }
+}
+
+drawChar = function(x, y, ch, color, back) {
+    if (!gameStarted) {
+        Game.display.draw(x, y, ch, color, back);
+    }
+}
+
+Game.drawMatrix = function(intensity) {
+    for (var j = 0; j < TOTAL_HEIGHT; j++) {
+        for (var i = 0; i < TOTAL_WIDTH; i++) {
+            Game.display.draw(i, j, Math.floor(ROT.RNG.getUniform() * 2).toString(), ROT.Color.toRGB([0, intensity * 16, 0]), "");
+        }
     }
 }
 
@@ -32,6 +155,7 @@ Game.prizes = {};
 Game.map = {};
 Game.messages = [];
 Game.player = null;
+Game.paul = null;
 
 Game.engine = null;
 
@@ -47,11 +171,18 @@ var Player = function(x, y) {
     this._y = y;
     this._draw();
 }
+
+var Paul = function(x, y) {
+    this._x = x;
+    this._y = y;
+    this._draw();
+}
  
 Game._refresh = function() {
     Game.display.clear();
     Game._drawWholeMap();
     Game._displayMessages();
+
     if (Game.player) {
         Game.player._draw();
         var lightPasses = function(x, y) {
@@ -66,6 +197,10 @@ Game._refresh = function() {
             var color = (!Game.map[x+","+y] ? "#113": "#336");
             Game.display.draw(x, y, ch, ch == "@" ? "#ff0" : "gray", color);
         });   
+    }
+
+    if (Game.paul) {
+        Game.paul._draw();
     }
 
     var line = Array(MAP_WIDTH).join(String.fromCharCode(0x2550));
@@ -84,8 +219,8 @@ Game._refresh = function() {
         var parts = key.split(",");
         var x = parseInt(parts[0]);
         var y = parseInt(parts[1]);
-        if (x != Game.player._x || y != Game.player._y) {
-            this.display.draw(x, y, "+", "red");        
+        if ((x != Game.player._x || y != Game.player._y) && (x != Game.paul._x || y != Game.paul._y)) {
+            this.display.draw(x, y, "+", "#cc9");        
         }
     }
 
@@ -97,8 +232,39 @@ Player.prototype._draw = function() {
 
 Player.prototype.act = function() {
     Game.engine.lock();
+    console.log("It is your turn, press any relevant key.");
     /* wait for user input; do stuff when user hits a key */
     window.addEventListener("keydown", this);
+}
+
+Paul.prototype._draw = function() {
+    Game.display.draw(this._x, this._y, "P", "#f00");
+}
+
+Paul.prototype.act = function() {
+    //Game.engine.lock();
+    console.log("Paul is IN DA HOUSE");
+    var diff = ROT.DIRS[8][Math.floor(ROT.RNG.getUniform() * 8)];
+    var newX = this._x + diff[0];
+    var newY = this._y + diff[1];
+ 
+    var newKey = newX + "," + newY;
+
+    while (newKey in Game.map) { 
+        if (Math.floor(ROT.RNG.getUniform()*3) == 1) {
+            new Message("Paul slams his wheelchair into the wall, breaking an Android tablet.", COLOR_INFO);
+            return;
+        }
+        var diff = ROT.DIRS[8][Math.floor(ROT.RNG.getUniform() * 8)];
+        var newX = this._x + diff[0];
+        var newY = this._y + diff[1];
+     
+        var newKey = newX + "," + newY;
+    } /* cannot move in this direction */
+
+    this._x = newX;
+    this._y = newY;
+
 }
  
 
@@ -135,7 +301,7 @@ Player.prototype.handleEvent = function(e) {
     Game._refresh();
 
     if (Game._doors[newKey]) {
-        new Message("You walk clumsily through the door...", COLOR_INFO);
+        new Message("You stumble clumsily through the door...", COLOR_INFO);
     }
 
     for (var key in Game.prizes) {
@@ -145,7 +311,8 @@ Player.prototype.handleEvent = function(e) {
         if (this._x == x && this._y == y) {
             delete Game.prizes[key];
             if (Object.keys(Game.prizes).length == 0) {
-                new Message("**** YOU GOT ALL DA PRIZES AND WON DA GAME BREH!!?! ****", COLOR_HAPPY);
+                Game._showWin();
+                //new Message("**** YOU GOT ALL DA PRIZES AND WON DA GAME BREH!!?! ****", COLOR_HAPPY);
             } else {
                 new Message("You got a prize!  Fuckin' A!", "#ff0");
             }
@@ -159,6 +326,20 @@ Player.prototype.handleEvent = function(e) {
 
 Game._digger = null;
 
+Game._showWin = function() {
+    this.display.clear();
+
+    for (j = 0; j < TOTAL_HEIGHT; j++) {
+        for (i = 0; i < TOTAL_WIDTH; i++) {
+            if (j < 16 || j > 18) this.display.draw(i,j,String.fromCharCode(0x263a), "#ff0");
+
+        }
+    }
+    this.display.drawText(27,17, "%c{#0f0}You WIN, eh?  Why not enjoy a nice fifth of rye?");
+    scheduler.remove(this.player);
+    scheduler.remove(this.paul);
+
+}
 Game._generateMap = function() {
     this._digger = new ROT.Map.Uniform(MAP_WIDTH,MAP_HEIGHT, { roomDugPercentage:.2, roomWidth:[6,14], roomHeight:[4,10]});
     var freecells = [];
@@ -177,6 +358,7 @@ Game._generateMap = function() {
     this._digger.create(digCallback.bind(this));
     this._generatePrizes(freecells);
     this._createPlayer(freecells);
+    this._generatePaul(freecells);
 
     var addDoor = function(x, y) {
         if (Math.floor(ROT.RNG.getUniform() * 10) > 6) {
@@ -230,6 +412,16 @@ Game._generatePrizes = function(freeCells) {
         //this.map[key] = "%";
         this.prizes[key] = "%";
     }
+};
+
+Game._generatePaul = function(freeCells) {
+    var index = Math.floor(ROT.RNG.getUniform() * freeCells.length);
+    var key = freeCells.splice(index, 1)[0];
+    //this.map[key] = "%";
+    var parts = key.split(",");
+    var x = parseInt(parts[0]);
+    var y = parseInt(parts[1]);
+    this.paul = new Paul(x, y);
 };
 
 Game._drawAt = function(key, s, c) {
