@@ -1,5 +1,7 @@
-const MAP_HEIGHT=24;
-const MAP_WIDTH=40;
+const MAP_HEIGHT=200;
+const MAP_WIDTH=200;
+const DISPLAY_HEIGHT=24;
+const DISPLAY_WIDTH=40;
 const MESSAGE_HEIGHT=5;
 const TOTAL_HEIGHT = MAP_HEIGHT;
 const TOTAL_WIDTH = MAP_WIDTH;
@@ -12,13 +14,15 @@ var scheduler = null;
 
 var Game = {
     display: null,
+    top: null,
+    left: null,
     init: function() {
         var tileSet = document.createElement("img");
         tileSet.src = "tiles.png";
 
         var options = {
             layout: "tile",
-            bg: "transparent",
+            bg: "#012",
             tileWidth: 22,
             tileHeight: 24,
             tileSet: tileSet,
@@ -29,14 +33,17 @@ var Game = {
                 "+": [48, 0],
                 ".": [24, 0]
             },
-            width: MAP_WIDTH,
-            height: MAP_HEIGHT
+            width: DISPLAY_WIDTH,
+            height: DISPLAY_HEIGHT
         }        
         console.log("Firin' up the game");
 //        this.display = new ROT.Display({width: TOTAL_WIDTH,height: TOTAL_HEIGHT, fontSize: 16});
         tileSet.onload = function() {
             Game.display = new ROT.Display(options);
-            Game.display2 = new ROT.Display({width: 80, height: 5, bg: "#032"});
+            Game.display2 = new ROT.Display({width: 98, height: 5});
+            Game.display.getContainer().style="border-style: groove; border-width: 3px; border-color:#99f; margin: 0px 0px 0px 0px";
+            Game.display2.getContainer().style="border-style: solid; border-width: 1px; border-color:#0f0; margin: 0px 0px 0px 0px";
+            //style="border-style: solid; border-width: 3px; border-color:#99f";
             document.getElementById("thegame").appendChild(Game.display.getContainer());
             document.getElementById("thegame").appendChild(Game.display2.getContainer());
     		Game._generateMap();   
@@ -80,7 +87,7 @@ Game._refresh = function() {
         var parts = key.split(",");
         var x = parseInt(parts[0]);
         var y = parseInt(parts[1]);
-        this.display.draw(x, y, [".", this.prizes[key]])
+        this._drawRel(x, y, [".", this.prizes[key]])
     }
     
     for (var key in this._doors) {
@@ -88,7 +95,7 @@ Game._refresh = function() {
         var x = parseInt(parts[0]);
         var y = parseInt(parts[1]);
         if ((x != Game.player._x || y != Game.player._y)) {
-            this.display.draw(x, y, ["+"]);        
+            this._drawRel(x, y, ["+"]);        
         }
     }
 
@@ -99,12 +106,11 @@ Game._refresh = function() {
 }
 
 Player.prototype._draw = function() {
-    Game.display.draw(this._x, this._y, [".", "@"], "#ff0");
+    Game._drawRel(this._x, this._y, [".", "@"]);
 }
 
 Player.prototype.act = function() {
     Game.engine.lock();
-    console.log("It is your turn, press any relevant key.");
     /* wait for user input; do stuff when user hits a key */
     window.addEventListener("keydown", this);
 }
@@ -127,7 +133,7 @@ Player.prototype.handleEvent = function(e) {
     var diff = ROT.DIRS[8][keyMap[code]];
     var newX = this._x + diff[0];
     var newY = this._y + diff[1];
- 
+
     var newKey = newX + "," + newY;
 
     if (newKey in Game.map) { 
@@ -135,9 +141,11 @@ Player.prototype.handleEvent = function(e) {
         return;
     } /* cannot move in this direction */
 
-    Game.display.draw(this._x, this._y, ".");
+    //Game.display.draw(this._x, this._y, ".");
     this._x = newX;
     this._y = newY;
+    Game.top = Game.top + diff[1];
+    Game.left = Game.left + diff[0];
 
     Game._refresh();
 
@@ -168,7 +176,7 @@ Player.prototype.handleEvent = function(e) {
 Game._digger = null;
 
 Game._generateMap = function() {
-    this._digger = new ROT.Map.Uniform(MAP_WIDTH,MAP_HEIGHT, { roomDugPercentage:.25, roomWidth:[3,8], roomHeight:[3,6]});
+    this._digger = new ROT.Map.Uniform(MAP_WIDTH,MAP_HEIGHT, { roomDugPercentage:.2, roomWidth:[3,16], roomHeight:[3,16]});
     var freecells = [];
 
     var digCallback = function(x, y, value) {
@@ -185,6 +193,9 @@ Game._generateMap = function() {
     this._digger.create(digCallback.bind(this));
     this._generatePrizes(freecells);
     this._createPlayer(freecells);
+
+    this.top = this.player._y - (DISPLAY_HEIGHT / 2);
+    this.left = this.player._x - (DISPLAY_WIDTH / 2);
 
     var addDoor = function(x, y) {
         if (Math.floor(ROT.RNG.getUniform() * 10) > 6) {
@@ -205,17 +216,23 @@ Game._generateMap = function() {
 Game._doors = {};
 
 Game._drawWholeMap = function() {
-    for (y = 0; y < MAP_HEIGHT; y++) {
-        for (x = 0; x < MAP_WIDTH; x++) {
-            var nullNeighbors = this._findNeighbors(x, y, null);
-            var key = x + "," + y;
-            if (this.map[key] && nullNeighbors > 0) {
-                this.display.draw(x, y, "#");
-            } else if (!this.map[key]) {
-                this.display.draw(x, y, ".")
-//                if (this.map[key]) {
-//                    this.display.draw(x, y, (Math.floor(ROT.RNG.getUniform() * 2)).toString(), "#030")
-//              }
+    for (var y = 0; y < DISPLAY_HEIGHT; y++) {
+        for (var x = 0; x < DISPLAY_WIDTH; x++) {
+            var i = this.left + x;
+            var j = this.top + y;
+            if (j >= 0 && j < MAP_HEIGHT && i >=0 && i < MAP_WIDTH) {
+                var nullNeighbors = this._findNeighbors(i, j, null);
+                var key = i + "," + j;
+                if (this.map[key] && nullNeighbors > 0) {
+                  //  alert('huh');
+                    this.display.draw(x, y, "#");
+                } else if (!this.map[key]) {
+                   // alert('huh2');
+                    this.display.draw(x, y, ".")
+    //                if (this.map[key]) {
+    //                    this.display.draw(x, y, (Math.floor(ROT.RNG.getUniform() * 2)).toString(), "#030")
+    //              }
+                }
             }
         }
     }
@@ -230,6 +247,14 @@ Game._generatePrizes = function(freeCells) {
         this.prizes[key] = "%";
     }
 };
+
+Game._drawRel = function(i, j, ch) {
+    var x = i - this.left;
+    var y = j - this.top;
+    if (x >= 0 && x < DISPLAY_WIDTH && y >= 0 && y < DISPLAY_HEIGHT) {
+        this.display.draw(x, y, ch);
+    }
+}
 
 Game._drawAt = function(key, s, c) {
     var parts = key.split(",");
