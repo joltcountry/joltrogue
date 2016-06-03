@@ -14,8 +14,24 @@ var scheduler = null;
 var Game = {
     display: null,
     init: function() {
+        var tileSet = document.createElement("img");
+        tileSet.src = "oryx_16bit_scifi_creatures.png";
+
+        var options = {
+            layout: "tile",
+            bg: "transparent",
+            tileWidth: 32,
+            tileHeight: 32,
+            tileSet: tileSet,
+            tileMap: {
+                "@": [3, 0]
+            },
+            width: 80,
+            height: 20
+        }        
         console.log("Firin' up the game");
         this.display = new ROT.Display({width: TOTAL_WIDTH,height: TOTAL_HEIGHT, fontSize: 16});
+//        this.display = new ROT.Display(options);
         document.getElementById("thegame").appendChild(this.display.getContainer());
         this.renderStart();
 		//this._generateMap();        
@@ -57,11 +73,11 @@ Game.startGame = function(e) {
 
 Game.renderStart = function() {
     this.display.clear();
-    for (var i = 30; i >= 0; i--) {
+    for (var i = 30; i >= 5; i--) {
         setTimeout(Game.drawMatrix, (30 - i) * 70, i);
     }
 
-    var delay = 30*70;
+    var delay = 25*70;
 
     for (var row = 0; row < TOTAL_HEIGHT; row++) {
 //        setTimeout(Game.drawMatrixLine, delay + (row+1 * 500), row);
@@ -238,7 +254,8 @@ Player.prototype.act = function() {
 }
 
 Paul.prototype._draw = function() {
-    Game.display.draw(this._x, this._y, "P", "#f00");
+    //Game.display.draw(this._x, this._y, String.fromCharCode("1F464"), "#f00");
+    Game.display.draw(this._x, this._y, String.fromCharCode("0x267f"), "#f00");
 }
 
 Paul.prototype.act = function() {
