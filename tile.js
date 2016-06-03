@@ -1,7 +1,9 @@
-const MAP_HEIGHT=200;
-const MAP_WIDTH=200;
-const DISPLAY_HEIGHT=24;
-const DISPLAY_WIDTH=40;
+//const MAP_HEIGHT=30;
+//const MAP_WIDTH=30;
+const MAP_HEIGHT=300;
+const MAP_WIDTH=300;
+var DISPLAY_HEIGHT=24;
+var DISPLAY_WIDTH=40;
 const MESSAGE_HEIGHT=5;
 const TOTAL_HEIGHT = MAP_HEIGHT;
 const TOTAL_WIDTH = MAP_WIDTH;
@@ -13,19 +15,33 @@ const COLOR_HAPPY = "#6f6"
 var scheduler = null;
 
 var Game = {
+    mode: "tile",
     display: null,
     top: null,
     left: null,
+    tileSet: null,
     init: function() {
-        var tileSet = document.createElement("img");
-        tileSet.src = "tiles.png";
+        this.tileSet = document.createElement("img");
+        this.tileSet.src = "tiles.png";
+    console.log("Firin' up the game");
+//        this.display = new ROT.Display({width: TOTAL_WIDTH,height: TOTAL_HEIGHT, fontSize: 16});
+        this.tileSet.onload = function() {
+            Game.renderStart();            
+        }
+    }
+}
 
-        var options = {
+Game._createDisplays = function() {
+    var options = null;
+    if (this.mode == "tile") {
+        DISPLAY_WIDTH = 40;
+        DISPLAY_HEIGHT = 24;
+        options = {
             layout: "tile",
             bg: "#012",
             tileWidth: 22,
             tileHeight: 24,
-            tileSet: tileSet,
+            tileSet: this.tileSet,
             tileMap: {
                 "@": [0, 0],
                 "%": [96, 0],
@@ -35,27 +51,43 @@ var Game = {
             },
             width: DISPLAY_WIDTH,
             height: DISPLAY_HEIGHT
-        }        
-        console.log("Firin' up the game");
-//        this.display = new ROT.Display({width: TOTAL_WIDTH,height: TOTAL_HEIGHT, fontSize: 16});
-        tileSet.onload = function() {
-            Game.display = new ROT.Display(options);
-            Game.display2 = new ROT.Display({width: 98, height: 5});
-            Game.display.getContainer().style="border-style: groove; border-width: 3px; border-color:#99f; margin: 0px 0px 0px 0px";
-            Game.display2.getContainer().style="border-style: solid; border-width: 1px; border-color:#0f0; margin: 0px 0px 0px 0px";
-            //style="border-style: solid; border-width: 3px; border-color:#99f";
-            document.getElementById("thegame").appendChild(Game.display.getContainer());
-            document.getElementById("thegame").appendChild(Game.display2.getContainer());
-    		Game._generateMap();   
-            new Message("Welcome to JOLTROGUE.  Please, enjoy the dungeon...", "#0f0");
-
-            Game._refresh();
-            scheduler = new ROT.Scheduler.Simple();
-            scheduler.add(Game.player, true);
-            Game.engine = new ROT.Engine(scheduler);
-            Game.engine.start();
-        }
+        };
+    } else {
+        DISPLAY_WIDTH = 98;
+        DISPLAY_HEIGHT = 38;
+        options = {
+            bg: "#012",
+            tileWidth: 22,
+            tileHeight: 24,
+            tileSet: this.tileSet,
+            tileMap: {
+                "@": [0, 0],
+                "%": [96, 0],
+                "#": [72, 0],
+                "+": [48, 0],
+                ".": [24, 0]
+            },
+            width: DISPLAY_WIDTH,
+            height: DISPLAY_HEIGHT
+        };
     }
+
+    if (this.player) {
+        this.top = this.player._y - (DISPLAY_HEIGHT / 2);
+        this.left = this.player._x - (DISPLAY_WIDTH / 2);
+    }
+
+    while (document.getElementById("thegame").hasChildNodes()) {
+        document.getElementById("thegame").removeChild(document.getElementById("thegame").lastChild);
+    }
+
+    Game.display = new ROT.Display(options);
+    Game.display2 = new ROT.Display({width: 98, height: 5});
+    Game.display.getContainer().style="display:block; border-style: groove; border-width: 3px; border-color:#99f; margin: 0px 0px 0px 0px";
+    Game.display2.getContainer().style="border-style: solid; border-width: 1px; border-color:#0f0; margin: 0px 0px 0px 0px";
+    //style="border-style: solid; border-width: 3px; border-color:#99f";
+    document.getElementById("thegame").appendChild(Game.display.getContainer());
+    document.getElementById("thegame").appendChild(Game.display2.getContainer()); 
 }
 
 Game.prizes = {};
@@ -72,12 +104,6 @@ var Message = function(s, c) {
     Game._refresh();
 }
 
-var Player = function(x, y) {
-    this._x = x;
-    this._y = y;
-    this._draw();
-}
-
 Game._refresh = function() {
     Game.display.clear();
     Game._drawWholeMap();
@@ -87,7 +113,7 @@ Game._refresh = function() {
         var parts = key.split(",");
         var x = parseInt(parts[0]);
         var y = parseInt(parts[1]);
-        this._drawRel(x, y, [".", this.prizes[key]])
+        this._drawRel(x, y, [".", this.prizes[key]], "#0f0")
     }
     
     for (var key in this._doors) {
@@ -95,7 +121,7 @@ Game._refresh = function() {
         var x = parseInt(parts[0]);
         var y = parseInt(parts[1]);
         if ((x != Game.player._x || y != Game.player._y)) {
-            this._drawRel(x, y, ["+"]);        
+            this._drawRel(x, y, ["+"], "#f96");        
         }
     }
 
@@ -105,78 +131,10 @@ Game._refresh = function() {
 
 }
 
-Player.prototype._draw = function() {
-    Game._drawRel(this._x, this._y, [".", "@"]);
-}
-
-Player.prototype.act = function() {
-    Game.engine.lock();
-    /* wait for user input; do stuff when user hits a key */
-    window.addEventListener("keydown", this);
-}
-
-Player.prototype.handleEvent = function(e) {
-    var keyMap = {};
-    keyMap[38] = 0;
-    keyMap[33] = 1;
-    keyMap[39] = 2;
-    keyMap[34] = 3;
-    keyMap[40] = 4;
-    keyMap[35] = 5;
-    keyMap[37] = 6;
-    keyMap[36] = 7;
-
-    var code = e.keyCode;
- 
-    if (!(code in keyMap)) { return; }
- 
-    var diff = ROT.DIRS[8][keyMap[code]];
-    var newX = this._x + diff[0];
-    var newY = this._y + diff[1];
-
-    var newKey = newX + "," + newY;
-
-    if (newKey in Game.map) { 
-        new Message("You can't go that way, cuz wall.", COLOR_WARN);
-        return;
-    } /* cannot move in this direction */
-
-    //Game.display.draw(this._x, this._y, ".");
-    this._x = newX;
-    this._y = newY;
-    Game.top = Game.top + diff[1];
-    Game.left = Game.left + diff[0];
-
-    Game._refresh();
-
-    if (Game._doors[newKey]) {
-        new Message("You stumble clumsily through the door...", COLOR_INFO);
-    }
-
-    for (var key in Game.prizes) {
-        var parts = key.split(",");
-        var x = parseInt(parts[0]);
-        var y = parseInt(parts[1]);
-        if (this._x == x && this._y == y) {
-            delete Game.prizes[key];
-            if (Object.keys(Game.prizes).length == 0) {
-//                Game._showWin();
-                new Message("**** YOU GOT ALL DA PRIZES AND WON DA GAME BREH!!?! ****", COLOR_HAPPY);
-            } else {
-                new Message("You got a prize!  Fuckin' A!", "#ff0");
-            }
-            break;
-        }
-    }
-
-    window.removeEventListener("keydown", this);
-    Game.engine.unlock();    
-}
-
 Game._digger = null;
 
 Game._generateMap = function() {
-    this._digger = new ROT.Map.Uniform(MAP_WIDTH,MAP_HEIGHT, { roomDugPercentage:.2, roomWidth:[3,16], roomHeight:[3,16]});
+    this._digger = new ROT.Map.Uniform(MAP_WIDTH,MAP_HEIGHT, { roomDugPercentage:.2, roomWidth:[3,20], roomHeight:[3,20], corridorLength:[3, 20]});
     var freecells = [];
 
     var digCallback = function(x, y, value) {
@@ -216,6 +174,7 @@ Game._generateMap = function() {
 Game._doors = {};
 
 Game._drawWholeMap = function() {
+
     for (var y = 0; y < DISPLAY_HEIGHT; y++) {
         for (var x = 0; x < DISPLAY_WIDTH; x++) {
             var i = this.left + x;
@@ -228,7 +187,7 @@ Game._drawWholeMap = function() {
                     this.display.draw(x, y, "#");
                 } else if (!this.map[key]) {
                    // alert('huh2');
-                    this.display.draw(x, y, ".")
+                    this.display.draw(x, y, ".", "#666")
     //                if (this.map[key]) {
     //                    this.display.draw(x, y, (Math.floor(ROT.RNG.getUniform() * 2)).toString(), "#030")
     //              }
@@ -240,7 +199,7 @@ Game._drawWholeMap = function() {
 }
 
 Game._generatePrizes = function(freeCells) {
-    for (var i=0;i<10;i++) {
+    for (var i=0;i<100;i++) {
         var index = Math.floor(ROT.RNG.getUniform() * freeCells.length);
         var key = freeCells.splice(index, 1)[0];
         //this.map[key] = "%";
@@ -248,11 +207,11 @@ Game._generatePrizes = function(freeCells) {
     }
 };
 
-Game._drawRel = function(i, j, ch) {
+Game._drawRel = function(i, j, ch, c) {
     var x = i - this.left;
     var y = j - this.top;
     if (x >= 0 && x < DISPLAY_WIDTH && y >= 0 && y < DISPLAY_HEIGHT) {
-        this.display.draw(x, y, ch);
+        this.display.draw(x, y, ch, c);
     }
 }
 

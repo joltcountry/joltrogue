@@ -167,6 +167,7 @@ Game.drawMatrix = function(intensity) {
     }
 }
 
+
 Game.prizes = {};
 Game.map = {};
 Game.messages = [];
