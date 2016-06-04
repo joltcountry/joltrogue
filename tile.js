@@ -1,9 +1,9 @@
 //const MAP_HEIGHT=30;
 //const MAP_WIDTH=30;
-const MAP_HEIGHT=40;
-const MAP_WIDTH=60;
+const MAP_HEIGHT=60;
+const MAP_WIDTH=120;
 var DISPLAY_HEIGHT=24;
-var DISPLAY_WIDTH=40;
+var DISPLAY_WIDTH=38;
 const MESSAGE_HEIGHT=5;
 const TOTAL_HEIGHT = MAP_HEIGHT;
 const TOTAL_WIDTH = MAP_WIDTH;
@@ -12,7 +12,7 @@ const COLOR_INFO = "#99f"
 const COLOR_WARN = "#f66"
 const COLOR_HAPPY = "#6f6"
 
-const NUM_PRIZES = 10;
+const NUM_PRIZES = 20;
 
 var scheduler = null;
 
@@ -37,7 +37,7 @@ var Game = {
 Game._createDisplays = function() {
     var options = null;
     if (this.mode == "tile") {
-        DISPLAY_WIDTH = 40;
+        DISPLAY_WIDTH = 38;
         DISPLAY_HEIGHT = 24;
         options = {
             layout: "tile",
@@ -61,7 +61,7 @@ Game._createDisplays = function() {
         DISPLAY_HEIGHT = 38;
         options = {
             bg: "#012",
-            tileWidth: 22,
+            tileWidth: 23,
             tileHeight: 24,
             tileSet: this.tileSet,
             tileMap: {
@@ -220,6 +220,21 @@ Game._generateMap = function() {
         //this.map[key] = ".";
     }
     this._digger.create(digCallback.bind(this));
+
+    var addDoor = function(x, y) {
+        if (Math.floor(ROT.RNG.getUniform() * 10) > 6) {
+            var key = x + "," + y;
+            Game._doors[key] = true;
+            delete freecells[key];
+        }
+    }
+
+    var rooms = this._digger.getRooms();
+    for (var i=0; i<rooms.length; i++) {
+        var room = rooms[i];
+        room.getDoors(addDoor);
+    }
+
     this._generatePrizes(freecells);
     this._createPlayer(freecells);
     this._generatePaul(freecells);    
@@ -305,11 +320,24 @@ Game._createPlayer = function(freeCells) {
 
 Game._generatePaul = function(freeCells) {
     var index = Math.floor(ROT.RNG.getUniform() * freeCells.length);
-    var key = freeCells.splice(index, 1)[0];
-    //this.map[key] = "%";
+    var key = freeCells[index];
     var parts = key.split(",");
     var x = parseInt(parts[0]);
     var y = parseInt(parts[1]);
+    var diffx = Math.abs(Game.player._x - x);
+    var diffy = Math.abs(Game.player._y - y);
+
+    while (diffx < 10 || diffy < 10) {
+        index = Math.floor(ROT.RNG.getUniform() * freeCells.length);
+        key = freeCells[index];
+        parts = key.split(",");
+        x = parseInt(parts[0]);
+        y = parseInt(parts[1]);
+        diffx = Math.abs(Game.player._x - x);
+        diffy = Math.abs(Game.player._y - y);
+    }
+
+    freeCells.splice(index, 1)[0];
     this.paul = new Paul(x, y);
 };
 

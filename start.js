@@ -126,6 +126,8 @@ Game.drawMatrix = function(intensity) {
 
 Game._showWin = function() {
 
+    Game.engine.lock();
+
     DISPLAY_HEIGHT = 44;
     DISPLAY_WIDTH = 98;
 
@@ -152,6 +154,8 @@ Game._showWin = function() {
 }
 
 Game._showLose = function() {
+
+    Game.engine.lock();
 
     DISPLAY_HEIGHT = 13;
     DISPLAY_WIDTH = 33;
