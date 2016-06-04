@@ -115,7 +115,9 @@ Paul.prototype._draw = function() {
 
 Paul.prototype.act = function() {
     //Game.engine.lock();
-    if (Math.floor(ROT.RNG.getUniform() * 5) > 0) {
+    var paulTest = ROT.RNG.getPercentage();
+
+    if (paulTest > 30) {
         var x = Game.player._x;
         var y = Game.player._y;
         var passableCallback = function(x, y) {
@@ -138,6 +140,27 @@ Paul.prototype.act = function() {
             this._y = y;
             Game._refresh();
         }
+    } else if (paulTest > 20) {
+        var diff = ROT.DIRS[8][Math.floor(ROT.RNG.getUniform() * 8)];
+        var newX = this._x + diff[0];
+        var newY = this._y + diff[1];
+     
+        var newKey = newX + "," + newY;
+
+        while (newKey in Game.map) { 
+            if (Math.floor(ROT.RNG.getUniform()*3) == 1) {
+                new Message("Paul slams his wheelchair into the wall, breaking an Android tablet.", COLOR_INFO);
+                return;
+            }
+            var diff = ROT.DIRS[8][Math.floor(ROT.RNG.getUniform() * 8)];
+            var newX = this._x + diff[0];
+            var newY = this._y + diff[1];
+         
+            var newKey = newX + "," + newY;
+        } /* cannot move in this direction */
+
+        this._x = newX;
+        this._y = newY;        
     }
 }
 
