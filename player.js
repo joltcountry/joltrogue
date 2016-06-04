@@ -33,6 +33,18 @@ Player.prototype.handleEvent = function(e) {
         Game._refresh();
     }
 
+    if (code == 73) {
+
+        var info = new ROT.Display({width: 40, height: 20});
+        //style="border-style: solid; border-width: 3px; border-color:#99f";
+        info.getContainer().style="position:relative; top: -400px; border-style: solid; border-width: 1; border-color: #ffffff; float:top;";
+
+        document.getElementById("thegame").appendChild(info.getContainer());
+
+        info.drawText(5,5, "This is an info tab.", "#fff");
+
+    }
+
     if (!(code in keyMap)) { return; }
  
     var diff = ROT.DIRS[8][keyMap[code]];

@@ -83,8 +83,8 @@ Game._createDisplays = function() {
 
     Game.display = new ROT.Display(options);
     Game.display2 = new ROT.Display({width: 98, height: 5});
-    Game.display.getContainer().style="display:block; border-style: groove; border-width: 3px; border-color:#99f; margin: 0px 0px 0px 0px";
-    Game.display2.getContainer().style="border-style: solid; border-width: 1px; border-color:#0f0; margin: 0px 0px 0px 0px";
+    Game.display.getContainer().style="border-style: groove; border-width: 3px; border-color:#99f;";
+    Game.display2.getContainer().style="border-style: solid; border-width: 1px; border-color:#0f0;";
     //style="border-style: solid; border-width: 3px; border-color:#99f";
     document.getElementById("thegame").appendChild(Game.display.getContainer());
     document.getElementById("thegame").appendChild(Game.display2.getContainer()); 
