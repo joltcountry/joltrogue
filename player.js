@@ -26,7 +26,14 @@ Player.prototype.handleEvent = function(e) {
     keyMap[36] = 7;
 
     var code = e.keyCode;
- 
+
+    if (code == 12) {
+        Game._refresh();
+        window.removeEventListener("keydown", this);
+        Game.engine.unlock();
+        return;
+    }
+
     if (code == 77) {
         Game.mode = (Game.mode == "tile" ? "ascii" : "tile");
         Game._createDisplays();
@@ -54,7 +61,6 @@ Player.prototype.handleEvent = function(e) {
     var newKey = newX + "," + newY;
 
     if (newKey in Game.map) { 
-        new Message("You can't go that way, cuz wall.", COLOR_WARN);
         return;
     } /* cannot move in this direction */
 
@@ -63,6 +69,11 @@ Player.prototype.handleEvent = function(e) {
     this._y = newY;
     Game.top = Game.top + diff[1];
     Game.left = Game.left + diff[0];
+
+    if (this._x == Game.paul._x && this._y == Game.paul._y) {
+        Game._showLose();
+        return;
+    }
 
     Game._refresh();
 

@@ -1,7 +1,7 @@
 //const MAP_HEIGHT=30;
 //const MAP_WIDTH=30;
-const MAP_HEIGHT=300;
-const MAP_WIDTH=300;
+const MAP_HEIGHT=40;
+const MAP_WIDTH=60;
 var DISPLAY_HEIGHT=24;
 var DISPLAY_WIDTH=40;
 const MESSAGE_HEIGHT=5;
@@ -11,6 +11,8 @@ const TOTAL_WIDTH = MAP_WIDTH;
 const COLOR_INFO = "#99f"
 const COLOR_WARN = "#f66"
 const COLOR_HAPPY = "#6f6"
+
+const NUM_PRIZES = 10;
 
 var scheduler = null;
 
@@ -26,7 +28,8 @@ var Game = {
     console.log("Firin' up the game");
 //        this.display = new ROT.Display({width: TOTAL_WIDTH,height: TOTAL_HEIGHT, fontSize: 16});
         this.tileSet.onload = function() {
-            Game.renderStart();            
+//            Game.renderStart();            
+            Game.startGame();            
         }
     }
 }
@@ -39,7 +42,7 @@ Game._createDisplays = function() {
         options = {
             layout: "tile",
             bg: "#012",
-            tileWidth: 22,
+            tileWidth: 23,
             tileHeight: 24,
             tileSet: this.tileSet,
             tileMap: {
@@ -47,7 +50,8 @@ Game._createDisplays = function() {
                 "%": [96, 0],
                 "#": [72, 0],
                 "+": [48, 0],
-                ".": [24, 0]
+                ".": [24, 0],
+                "P": [168, 0]
             },
             width: DISPLAY_WIDTH,
             height: DISPLAY_HEIGHT
@@ -94,8 +98,48 @@ Game.prizes = {};
 Game.map = {};
 Game.messages = [];
 Game.player = null;
+Game.paul = null;
 
 Game.engine = null;
+
+var Paul = function(x, y) {
+    this._x = x;
+    this._y = y;
+    this._draw();
+}
+
+Paul.prototype._draw = function() {
+    //Game.display.draw(this._x, this._y, String.fromCharCode("1F464"), "#f00");
+    Game._drawRel(this._x, this._y, [".", "P"], "#f00");    
+}
+
+Paul.prototype.act = function() {
+    //Game.engine.lock();
+    if (Math.floor(ROT.RNG.getUniform() * 5) > 0) {
+        var x = Game.player._x;
+        var y = Game.player._y;
+        var passableCallback = function(x, y) {
+            return (!Game.map[x+","+y]);
+        }
+        var astar = new ROT.Path.AStar(x, y, passableCallback);
+     
+        var path = [];
+        var pathCallback = function(x, y) {
+            path.push([x, y]);
+        }
+        astar.compute(this._x, this._y, pathCallback);
+        path.shift(); /* remove Pedro's position */
+        if (path.length == 1) {
+            Game._showLose();
+        } else {
+            x = path[0][0];
+            y = path[0][1];
+            this._x = x;
+            this._y = y;
+            Game._refresh();
+        }
+    }
+}
 
 var Message = function(s, c) {
     this._str = s;
@@ -125,6 +169,10 @@ Game._refresh = function() {
         }
     }
 
+    if (Game.paul) {
+        Game.paul._draw();
+    }
+
     if (Game.player) {
         Game.player._draw();
     }
@@ -151,6 +199,7 @@ Game._generateMap = function() {
     this._digger.create(digCallback.bind(this));
     this._generatePrizes(freecells);
     this._createPlayer(freecells);
+    this._generatePaul(freecells);    
 
     this.top = this.player._y - (DISPLAY_HEIGHT / 2);
     this.left = this.player._x - (DISPLAY_WIDTH / 2);
@@ -199,7 +248,7 @@ Game._drawWholeMap = function() {
 }
 
 Game._generatePrizes = function(freeCells) {
-    for (var i=0;i<100;i++) {
+    for (var i=0;i<NUM_PRIZES;i++) {
         var index = Math.floor(ROT.RNG.getUniform() * freeCells.length);
         var key = freeCells.splice(index, 1)[0];
         //this.map[key] = "%";
@@ -229,6 +278,16 @@ Game._createPlayer = function(freeCells) {
     var x = parseInt(parts[0]);
     var y = parseInt(parts[1]);
     this.player = new Player(x, y);
+};
+
+Game._generatePaul = function(freeCells) {
+    var index = Math.floor(ROT.RNG.getUniform() * freeCells.length);
+    var key = freeCells.splice(index, 1)[0];
+    //this.map[key] = "%";
+    var parts = key.split(",");
+    var x = parseInt(parts[0]);
+    var y = parseInt(parts[1]);
+    this.paul = new Paul(x, y);
 };
 
 var keyMap = {};

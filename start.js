@@ -12,6 +12,7 @@ Game.startGame = function(e) {
     Game._refresh();
     scheduler = new ROT.Scheduler.Simple();
     scheduler.add(Game.player, true);
+    scheduler.add(Game.paul, true);
     Game.engine = new ROT.Engine(scheduler);
     Game.engine.start();  
     gameStarted = true;
@@ -145,6 +146,32 @@ Game._showWin = function() {
         }
     }
     this.display.drawText(27,20, "%c{#0f0}You WIN, eh?  Why not enjoy a nice fifth of rye?");
+    scheduler.remove(this.player);
+    scheduler.remove(this.paul);
+
+}
+
+Game._showLose = function() {
+
+    DISPLAY_HEIGHT = 13;
+    DISPLAY_WIDTH = 33;
+
+    while (document.getElementById("thegame").hasChildNodes()) {
+        document.getElementById("thegame").removeChild(document.getElementById("thegame").lastChild);
+    }  
+
+    Game.display = new ROT.Display({width: DISPLAY_WIDTH, height: DISPLAY_HEIGHT, fontSize: 48});
+    //style="border-style: solid; border-width: 3px; border-color:#99f";
+    document.getElementById("thegame").appendChild(Game.display.getContainer());
+
+    this.display.clear();
+
+    for (i = 0; i < 30; i++) {
+        this.display.draw(Math.floor(ROT.RNG.getUniform() * DISPLAY_WIDTH),Math.floor(ROT.RNG.getUniform() * DISPLAY_HEIGHT),String.fromCharCode(0x2620), "#f00");
+    }
+
+    this.display.drawText(1,5, "%c{#f99}Oh no, you been crushed by Paul");
+    this.display.drawText(2,7, "%c{#f99}Welp, time to drink some rye!");
     scheduler.remove(this.player);
     scheduler.remove(this.paul);
 
