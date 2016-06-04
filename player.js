@@ -87,11 +87,12 @@ Player.prototype.handleEvent = function(e) {
         var y = parseInt(parts[1]);
         if (this._x == x && this._y == y) {
             delete Game.prizes[key];
-            if (Object.keys(Game.prizes).length == 0) {
+            var numPrizes = Object.keys(Game.prizes).length;
+            if (numPrizes == 0) {
                 Game._showWin();
 //                new Message("**** YOU GOT ALL DA PRIZES AND WON DA GAME BREH!!?! ****", COLOR_HAPPY);
             } else {
-                new Message("You got a prize!  Fuckin' A!", "#ff0");
+                new Message("You got a prize!  (" + numPrizes + " remaining)", "#ff0");
             }
             break;
         }
