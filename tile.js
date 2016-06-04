@@ -28,8 +28,8 @@ var Game = {
     console.log("Firin' up the game");
 //        this.display = new ROT.Display({width: TOTAL_WIDTH,height: TOTAL_HEIGHT, fontSize: 16});
         this.tileSet.onload = function() {
-//            Game.renderStart();            
-            Game.startGame();            
+            Game.renderStart();            
+//            Game.startGame();            
         }
     }
 }
