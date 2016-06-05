@@ -117,7 +117,7 @@ Paul.prototype.act = function() {
     //Game.engine.lock();
     var paulTest = ROT.RNG.getPercentage();
 
-    if (paulTest > 30) {
+    if (paulTest > 40) {
         var x = Game.player._x;
         var y = Game.player._y;
         var passableCallback = function(x, y) {
