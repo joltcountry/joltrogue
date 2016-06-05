@@ -128,26 +128,25 @@ Game._showWin = function() {
 
     Game.engine.lock();
 
-    DISPLAY_HEIGHT = 44;
-    DISPLAY_WIDTH = 98;
+    DISPLAY_HEIGHT = 13;
+    DISPLAY_WIDTH = 33;
 
     while (document.getElementById("thegame").hasChildNodes()) {
         document.getElementById("thegame").removeChild(document.getElementById("thegame").lastChild);
     }  
 
-    Game.display = new ROT.Display({width: DISPLAY_WIDTH, height: DISPLAY_HEIGHT});
+    Game.display = new ROT.Display({width: DISPLAY_WIDTH, height: DISPLAY_HEIGHT, fontSize: 48});
     //style="border-style: solid; border-width: 3px; border-color:#99f";
     document.getElementById("thegame").appendChild(Game.display.getContainer());
 
     this.display.clear();
 
-    for (j = 0; j < DISPLAY_HEIGHT; j++) {
-        for (i = 0; i < DISPLAY_WIDTH; i++) {
-            if (j < 19 || j > 21) this.display.draw(i,j,String.fromCharCode(0x263a), "#ff0");
-
-        }
+    for (i = 0; i < 30; i++) {
+        this.display.draw(Math.floor(ROT.RNG.getUniform() * DISPLAY_WIDTH),Math.floor(ROT.RNG.getUniform() * DISPLAY_HEIGHT),String.fromCharCode(0x263a), "#ff0");
     }
-    this.display.drawText(27,20, "%c{#0f0}You WIN, eh?  Why not enjoy a nice fifth of rye?");
+
+    this.display.drawText(10,5, "%c{#0f0}Yay, you won!");
+    this.display.drawText(1,7, "%c{#0f0}Let's celebrate with some rye!!");
     scheduler.remove(this.player);
     scheduler.remove(this.paul);
 
