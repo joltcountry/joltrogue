@@ -45,7 +45,7 @@ Game._createDisplays = function() {
                 "+": [48, 0],
                 ".": [24, 0],
                 "P": [168, 0],
-                " ": [24, 24],
+                " ": [144, 96],
                 "1": [0, 72],
                 "2": [96, 72],
                 "3": [72, 72],
@@ -300,8 +300,13 @@ Game._drawWholeMap = function() {
                         color = items[item].getDarkColor();
                     }
                     this.display.draw(x, y, dispChars, color);
+                } else {
+                    this.display.draw(x, y, " ");
                 }
+            } else {
+                    this.display.draw(x, y, " ");
             }
+
         }
     }
 
