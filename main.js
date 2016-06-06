@@ -121,7 +121,7 @@ Paul.prototype.act = function() {
 
     var paulTest = ROT.RNG.getPercentage();
 
-    if (paulTest > 35) {
+    if (paulTest > 40) {
         var x = Game.player._x;
         var y = Game.player._y;
         var passableCallback = function(x, y) {

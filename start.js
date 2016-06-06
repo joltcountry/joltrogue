@@ -8,7 +8,7 @@ Game.startGame = function(e) {
     Game._createDisplays();
     Game._generateMap();   
     new Message("Welcome to JOLTROGUE.  Please, enjoy the dungeon...", COLOR_HAPPY);
-    new Message("(Press 'm' to switch between ASCII and graphic modes.)", COLOR_INFO)
+    new Message("(Press '?' for a list of commands.)", COLOR_INFO)
     Game._refresh();
     scheduler = new ROT.Scheduler.Simple();
     scheduler.add(Game.player, true);

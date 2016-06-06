@@ -26,6 +26,12 @@ Player.prototype.handleEvent = function(e) {
     keyMap[36] = 7;
 
     var code = e.keyCode;
+//    if (code == ROT.VK_QUESTION_MARK) {
+    if (code == ROT.VK_SLASH && e.shiftKey) {
+        new Message("Commands:", COLOR_INFO);
+        new Message("m - switch between tiles and ASCII", COLOR_INFO);
+        new Message("g - get item", COLOR_INFO);
+    }
 
     if (code == 12) {
         Game._refresh();
@@ -50,6 +56,16 @@ Player.prototype.handleEvent = function(e) {
 
         info.drawText(5,5, "This is an info tab.", "#fff");
 
+    }
+
+    if (code == ROT.VK_G && Game.level.getLoc(this._x, this._y).hasItem(ITEM_PRIZE)) {
+        Game.level.getLoc(this._x, this._y).removeItem(ITEM_PRIZE);
+        Game.prizesLeft--;
+        if (Game.prizesLeft == 0) {
+            Game._showWin();
+        } else {
+            new Message("You got a prize!  (" + Game.prizesLeft + " remaining)", COLOR_HAPPY);
+        }
     }
 
     if (!(code in keyMap)) { return; }
@@ -80,13 +96,7 @@ Player.prototype.handleEvent = function(e) {
     }
 
     if (Game.level.getLoc(newX, newY).hasItem(ITEM_PRIZE)) {
-        Game.level.getLoc(newX, newY).removeItem(ITEM_PRIZE);
-        Game.prizesLeft--;
-        if (Game.prizesLeft == 0) {
-            Game._showWin();
-        } else {
-            new Message("You got a prize!  (" + Game.prizesLeft + " remaining)", "#ff0");
-        }
+        new Message("There's a prize here!  Oh boy!", COLOR_INFO);
     }
 
     window.removeEventListener("keydown", this);
