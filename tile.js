@@ -1,30 +1,23 @@
 //const MAP_HEIGHT=30;
 //const MAP_WIDTH=30;
-const MAP_HEIGHT=60;
-const MAP_WIDTH=120;
+
 var DISPLAY_HEIGHT=24;
 var DISPLAY_WIDTH=38;
-const MESSAGE_HEIGHT=5;
-const TOTAL_HEIGHT = MAP_HEIGHT;
-const TOTAL_WIDTH = MAP_WIDTH;
 
-const COLOR_INFO = "#99f"
-const COLOR_WARN = "#f66"
-const COLOR_HAPPY = "#6f6"
 
 const NUM_PRIZES = 20;
 
 var scheduler = null;
 
 var Game = {
-    mode: "tile",
+    tiles: true,
     display: null,
     top: null,
     left: null,
     tileSet: null,
     init: function() {
         this.tileSet = document.createElement("img");
-        this.tileSet.src = "tiles.png";
+        this.tileSet.src = "newtiles.png";
     console.log("Firin' up the game");
 //        this.display = new ROT.Display({width: TOTAL_WIDTH,height: TOTAL_HEIGHT, fontSize: 16});
         this.tileSet.onload = function() {
@@ -36,7 +29,7 @@ var Game = {
 
 Game._createDisplays = function() {
     var options = null;
-    if (this.mode == "tile") {
+    if (this.tiles) {
         DISPLAY_WIDTH = 38;
         DISPLAY_HEIGHT = 24;
         options = {
@@ -51,7 +44,15 @@ Game._createDisplays = function() {
                 "#": [72, 0],
                 "+": [48, 0],
                 ".": [24, 0],
-                "P": [168, 0]
+                "P": [168, 0],
+                " ": [24, 24],
+                "1": [0, 72],
+                "2": [96, 72],
+                "3": [72, 72],
+                "4": [48, 72],
+                "5": [24, 72],
+                "6": [168, 72],
+                "7": [24, 96]
             },
             width: DISPLAY_WIDTH,
             height: DISPLAY_HEIGHT
@@ -99,7 +100,8 @@ Game.map = {};
 Game.messages = [];
 Game.player = null;
 Game.paul = null;
-
+Game.prizesLeft = NUM_PRIZES;
+Game.seen = {};
 Game.engine = null;
 
 var Paul = function(x, y) {
@@ -117,11 +119,11 @@ Paul.prototype.act = function() {
     //Game.engine.lock();
     var paulTest = ROT.RNG.getPercentage();
 
-    if (paulTest > 40) {
+    if (paulTest > 35) {
         var x = Game.player._x;
         var y = Game.player._y;
         var passableCallback = function(x, y) {
-            return (!Game.map[x+","+y]);
+            return (Game.level.getLoc(x, y).getTerrain() && !Game.level.getLoc(x, y).getTerrain().blocksMovement());
         }
         var astar = new ROT.Path.AStar(x, y, passableCallback);
      
@@ -131,6 +133,11 @@ Paul.prototype.act = function() {
         }
         astar.compute(this._x, this._y, pathCallback);
         path.shift(); /* remove Pedro's position */
+
+        // PATHING HACK
+        if (Math.abs(this._x - path[0][0]) > 1 || Math.abs(this._y - path[0][1]) > 1) return;
+        ////////////////
+
         if (path.length == 1) {
             Game._showLose();
         } else {
@@ -147,17 +154,15 @@ Paul.prototype.act = function() {
      
         var newKey = newX + "," + newY;
 
-        while (newKey in Game.map) { 
+        while (Game.level.getLoc(newX, newY).getTerrain().blocksMovement()) { 
             if (Math.floor(ROT.RNG.getUniform()*3) == 1) {
                 new Message("Paul slams his wheelchair into the wall, breaking an Android tablet.", COLOR_INFO);
                 return;
             }
-            var diff = ROT.DIRS[8][Math.floor(ROT.RNG.getUniform() * 8)];
-            var newX = this._x + diff[0];
-            var newY = this._y + diff[1];
-         
-            var newKey = newX + "," + newY;
-        } /* cannot move in this direction */
+            diff = ROT.DIRS[8][Math.floor(ROT.RNG.getUniform() * 8)];
+            newX = this._x + diff[0];
+            newY = this._y + diff[1];
+        }
 
         this._x = newX;
         this._y = newY;        
@@ -183,19 +188,6 @@ Game._refresh = function() {
         this._drawRel(x, y, [".", this.prizes[key]], "#0f0")
     }
     
-    for (var key in this._doors) {
-        var parts = key.split(",");
-        var x = parseInt(parts[0]);
-        var y = parseInt(parts[1]);
-        if ((x != Game.player._x || y != Game.player._y)) {
-            this._drawRel(x, y, ["+"], "#f96");        
-        }
-    }
-
-    if (Game.paul) {
-        Game.paul._draw();
-    }
-
     if (Game.player) {
         Game.player._draw();
     }
@@ -208,89 +200,123 @@ Game._generateMap = function() {
     this._digger = new ROT.Map.Uniform(MAP_WIDTH,MAP_HEIGHT, { roomDugPercentage:.2, roomWidth:[3,20], roomHeight:[3,20], corridorLength:[3, 20]});
     var freecells = [];
 
+    this.level = new Level(MAP_WIDTH, MAP_HEIGHT);
+
     var digCallback = function(x, y, value) {
-        var key = x+","+y;
+        var key = x + "," + y;
         if (value) { 
-	        this.map[key] = ROT.RNG.getPercentage() > 10 ? "." : ",";
-        } /* do not store walls */ else {
+            this.level.setLoc(x, y, new Location(x, y, TERRAIN_OUTSIDE, []));
+        } else {
+            this.level.setLoc(x, y, new Location(x, y, TERRAIN_FLOOR, []));
             freecells.push(key);
         }
  
-        //var key = x+","+y;
-        //this.map[key] = ".";
     }
+
     this._digger.create(digCallback.bind(this));
 
-    var addDoor = function(x, y) {
-        if (Math.floor(ROT.RNG.getUniform() * 10) > 6) {
-            var key = x + "," + y;
-            Game._doors[key] = true;
-            delete freecells[key];
-        }
-    }
+    // determine walls
 
-    var rooms = this._digger.getRooms();
-    for (var i=0; i<rooms.length; i++) {
-        var room = rooms[i];
-        room.getDoors(addDoor);
-    }
-
-    this._generatePrizes(freecells);
-    this._createPlayer(freecells);
-    this._generatePaul(freecells);    
-
-    this.top = this.player._y - (DISPLAY_HEIGHT / 2);
-    this.left = this.player._x - (DISPLAY_WIDTH / 2);
-
-    var addDoor = function(x, y) {
-        if (Math.floor(ROT.RNG.getUniform() * 10) > 6) {
-            var key = x + "," + y;
-            Game._doors[key] = true;
-        }
-    }
-
-    var rooms = this._digger.getRooms();
-    for (var i=0; i<rooms.length; i++) {
-        var room = rooms[i];
-        room.getDoors(addDoor);
-    }
-
-
-}
-
-Game._doors = {};
-
-Game._drawWholeMap = function() {
-
-    for (var y = 0; y < DISPLAY_HEIGHT; y++) {
-        for (var x = 0; x < DISPLAY_WIDTH; x++) {
-            var i = this.left + x;
-            var j = this.top + y;
-            if (j >= 0 && j < MAP_HEIGHT && i >=0 && i < MAP_WIDTH) {
-                var nullNeighbors = this._findNeighbors(i, j, null);
-                var key = i + "," + j;
-                if (this.map[key] && nullNeighbors > 0) {
-                  //  alert('huh');
-                    this.display.draw(x, y, "#");
-                } else if (!this.map[key]) {
-                   // alert('huh2');
-                    this.display.draw(x, y, ".", "#666")
-    //                if (this.map[key]) {
-    //                    this.display.draw(x, y, (Math.floor(ROT.RNG.getUniform() * 2)).toString(), "#030")
-    //              }
+    for (var y = 0; y < this.level.getHeight(); y++) {
+        for (var x = 0; x < this.level.getWidth(); x++) {
+            if (this.level.getLoc(x, y).getTerrain() == TERRAIN_OUTSIDE) { 
+                var floorNeighbors = this._findNeighbors(this.level, x, y, TERRAIN_FLOOR);
+                if (floorNeighbors > 0) {
+                    this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
                 }
             }
         }
     }
 
+    //////////////////
+
+
+    var addDoor = function(x, y) {
+        if (Math.floor(ROT.RNG.getUniform() * 10) > 6) {
+            Game.level.setLoc(x, y, new Location(x, y, TERRAIN_DOOR, []));
+            delete freecells[x + "," + y];
+        }
+    }
+
+    var rooms = this._digger.getRooms();
+
+    for (var i=0; i<rooms.length; i++) {
+        var room = rooms[i];
+        room.getDoors(addDoor);
+    }
+
+    this._generatePrizes(this.level, freecells);
+    this._createPlayer(this.level, freecells);
+    this._generatePaul(this.level, freecells);    
+
+    this.top = this.player._y - (DISPLAY_HEIGHT / 2);
+    this.left = this.player._x - (DISPLAY_WIDTH / 2);
+
+
 }
 
-Game._generatePrizes = function(freeCells) {
+Game._drawWholeMap = function() {
+
+    var visible = {};
+    if (Game.player) {
+        var lightPasses = function(x, y) {
+            return ((Game.player._x == x && Game.player._y == y) || Game.level.getLoc(x, y) && !Game.level.getLoc(x, y).getTerrain().blocksLOS());
+        }
+        var fov = new ROT.FOV.PreciseShadowcasting(lightPasses);
+
+        fov.compute(Game.player._x, Game.player._y, 15, function(x, y, r, visibility) {
+            visible[x+","+y]=true;
+        });   
+    }
+
+    for (var y = 0; y < DISPLAY_HEIGHT; y++) {
+        for (var x = 0; x < DISPLAY_WIDTH; x++) {
+            var i = this.left + x;
+            var j = this.top + y;
+            var key = i + "," + j;
+            if (j >= 0 && j < MAP_HEIGHT && i >=0 && i < MAP_WIDTH) {
+                var loc = this.level.getLoc(i,j);
+                var items = loc.getItems();
+                var color = null;
+                if (visible[key]) {
+                    var dispChars = [loc.getTerrain().getDrawChar()];
+                    this.seen[key] = true;
+                    for (var item = 0; item < items.length; item++) {
+                        dispChars.push(items[item].getDrawChar());
+                        color = items[item].getDrawColor();
+                    }
+                    this.display.draw(x, y, dispChars, color);
+                    if (Game.paul && Game.paul._x == i && Game.paul._y == j) {
+                        this.display.draw(x, y, "P", "#f00");
+                    }
+                } else if (this.seen[key]) {
+                    var dispChars = [this.tiles ? loc.getTerrain().getDarkChar() : loc.getTerrain().getDrawChar()];
+                    var color = loc.getTerrain().getDarkColor();
+                    for (var item = 0; item < items.length; item++) {
+                        dispChars.push(this.tiles ? items[item].getDarkChar() : items[item].getDrawChar());
+                        color = items[item].getDarkColor();
+                    }
+                    this.display.draw(x, y, dispChars, color);
+                }
+            }
+        }
+    }
+
+    if (Game.paul) {
+
+    }
+
+}
+
+Game._generatePrizes = function(level, freeCells) {
     for (var i=0;i<NUM_PRIZES;i++) {
         var index = Math.floor(ROT.RNG.getUniform() * freeCells.length);
         var key = freeCells.splice(index, 1)[0];
-        //this.map[key] = "%";
-        this.prizes[key] = "%";
+        var parts = key.split(",");
+        var x = parseInt(parts[0]);
+        var y = parseInt(parts[1]);
+
+        this.level.getLoc(x, y).addItem(ITEM_PRIZE);
     }
 };
 
@@ -309,7 +335,7 @@ Game._drawAt = function(key, s, c) {
     this.display.draw(x, y, s, c)
 }
 
-Game._createPlayer = function(freeCells) {
+Game._createPlayer = function(level,freeCells) {
     var index = Math.floor(ROT.RNG.getUniform() * freeCells.length);
     var key = freeCells.splice(index, 1)[0];
     var parts = key.split(",");
@@ -318,7 +344,7 @@ Game._createPlayer = function(freeCells) {
     this.player = new Player(x, y);
 };
 
-Game._generatePaul = function(freeCells) {
+Game._generatePaul = function(level,freeCells) {
     var index = Math.floor(ROT.RNG.getUniform() * freeCells.length);
     var key = freeCells[index];
     var parts = key.split(",");
@@ -341,33 +367,20 @@ Game._generatePaul = function(freeCells) {
     this.paul = new Paul(x, y);
 };
 
-var keyMap = {};
-keyMap[38] = 0;
-keyMap[33] = 1;
-keyMap[39] = 2;
-keyMap[34] = 3;
-keyMap[40] = 4;
-keyMap[35] = 5;
-keyMap[37] = 6;
-keyMap[36] = 7;
-
-Game._findNeighbors = function(x, y, val) {
+Game._findNeighbors = function(level, x, y, terrain) {
     var neighbors = 0;
     for (j = y-1; j <= y+1; j++) {
         for (i = x-1; i <= x+1; i++) {
             if (j == y && i == x) continue;
             if (i >= 0 && i < MAP_WIDTH && j >= 0 && j < MAP_HEIGHT) {
-                var key = i + "," + j;
-                var thisval = this.map[key];
-                if (val == thisval) {
+                var thisTerrain = level.getLoc(i, j).getTerrain();
+                if (thisTerrain == terrain) {
                     neighbors++;
                 }
             }
         }
     }
-    if (neighbors > 0) {
-//        alert("foundneihgbors");
-    }
+
     return neighbors;
 }
 

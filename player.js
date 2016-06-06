@@ -35,7 +35,7 @@ Player.prototype.handleEvent = function(e) {
     }
 
     if (code == 77) {
-        Game.mode = (Game.mode == "tile" ? "ascii" : "tile");
+        Game.tiles = (!Game.tiles);
         Game._createDisplays();
         Game._refresh();
     }
@@ -58,9 +58,7 @@ Player.prototype.handleEvent = function(e) {
     var newX = this._x + diff[0];
     var newY = this._y + diff[1];
 
-    var newKey = newX + "," + newY;
-
-    if (newKey in Game.map) { 
+    if (Game.level.getLoc(newX, newY).getTerrain().blocksMovement()) { 
         return;
     } /* cannot move in this direction */
 
@@ -77,24 +75,17 @@ Player.prototype.handleEvent = function(e) {
 
     Game._refresh();
 
-    if (Game._doors[newKey]) {
+    if (Game.level.getLoc(newX, newY).getTerrain() == TERRAIN_DOOR) {
         new Message("You stumble clumsily through the door...", COLOR_INFO);
     }
 
-    for (var key in Game.prizes) {
-        var parts = key.split(",");
-        var x = parseInt(parts[0]);
-        var y = parseInt(parts[1]);
-        if (this._x == x && this._y == y) {
-            delete Game.prizes[key];
-            var numPrizes = Object.keys(Game.prizes).length;
-            if (numPrizes == 0) {
-                Game._showWin();
-//                new Message("**** YOU GOT ALL DA PRIZES AND WON DA GAME BREH!!?! ****", COLOR_HAPPY);
-            } else {
-                new Message("You got a prize!  (" + numPrizes + " remaining)", "#ff0");
-            }
-            break;
+    if (Game.level.getLoc(newX, newY).hasItem(ITEM_PRIZE)) {
+        Game.level.getLoc(newX, newY).removeItem(ITEM_PRIZE);
+        Game.prizesLeft--;
+        if (Game.prizesLeft == 0) {
+            Game._showWin();
+        } else {
+            new Message("You got a prize!  (" + Game.prizesLeft + " remaining)", "#ff0");
         }
     }
 

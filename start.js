@@ -19,7 +19,9 @@ Game.startGame = function(e) {
 }
 
 Game.renderStart = function() {
-
+test();
+//Game.startGame();
+//return;
     DISPLAY_HEIGHT = 44;
     DISPLAY_WIDTH = 98;
     Game.display = new ROT.Display({width: DISPLAY_WIDTH, height: DISPLAY_HEIGHT});
