@@ -164,6 +164,8 @@ Paul.prototype.act = function() {
 
         this._x = newX;
         this._y = newY;        
+        Game._refresh();
+                
     }
 
     Game.engine.unlock();
