@@ -116,7 +116,9 @@ Paul.prototype._draw = function() {
 }
 
 Paul.prototype.act = function() {
-    //Game.engine.lock();
+
+    Game.engine.lock();
+
     var paulTest = ROT.RNG.getPercentage();
 
     if (paulTest > 35) {
@@ -134,10 +136,6 @@ Paul.prototype.act = function() {
         astar.compute(this._x, this._y, pathCallback);
         path.shift(); /* remove Pedro's position */
 
-        // PATHING HACK
-        if (Math.abs(this._x - path[0][0]) > 1 || Math.abs(this._y - path[0][1]) > 1) return;
-        ////////////////
-
         if (path.length == 1) {
             Game._showLose();
         } else {
@@ -151,12 +149,12 @@ Paul.prototype.act = function() {
         var diff = ROT.DIRS[8][Math.floor(ROT.RNG.getUniform() * 8)];
         var newX = this._x + diff[0];
         var newY = this._y + diff[1];
-     
         var newKey = newX + "," + newY;
 
         while (Game.level.getLoc(newX, newY).getTerrain().blocksMovement()) { 
             if (Math.floor(ROT.RNG.getUniform()*3) == 1) {
                 new Message("Paul slams his wheelchair into the wall, breaking an Android tablet.", COLOR_INFO);
+                Game.engine.unlock();                
                 return;
             }
             diff = ROT.DIRS[8][Math.floor(ROT.RNG.getUniform() * 8)];
@@ -167,6 +165,9 @@ Paul.prototype.act = function() {
         this._x = newX;
         this._y = newY;        
     }
+
+    Game.engine.unlock();
+
 }
 
 var Message = function(s, c) {
