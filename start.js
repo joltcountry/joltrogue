@@ -128,6 +128,7 @@ Game.drawMatrix = function(intensity) {
 
 Game._showWin = function() {
 
+    window.removeEventListener('keydown', Game.startGame);
     Game.engine.lock();
 
     DISPLAY_HEIGHT = 13;
@@ -156,6 +157,7 @@ Game._showWin = function() {
 
 Game._showLose = function() {
 
+    window.removeEventListener('keydown', Game.startGame);
     Game.engine.lock();
 
     DISPLAY_HEIGHT = 13;
