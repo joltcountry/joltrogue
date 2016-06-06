@@ -103,6 +103,7 @@ Game.paul = null;
 Game.prizesLeft = NUM_PRIZES;
 Game.seen = {};
 Game.engine = null;
+Game.freecells = [];
 
 var Paul = function(x, y) {
     this._x = x;
@@ -165,7 +166,7 @@ Paul.prototype.act = function() {
         this._x = newX;
         this._y = newY;        
         Game._refresh();
-                
+
     }
 
     Game.engine.unlock();
@@ -201,7 +202,6 @@ Game._digger = null;
 
 Game._generateMap = function() {
     this._digger = new ROT.Map.Uniform(MAP_WIDTH,MAP_HEIGHT, { roomDugPercentage:.2, roomWidth:[3,20], roomHeight:[3,20], corridorLength:[3, 20]});
-    var freecells = [];
 
     this.level = new Level(MAP_WIDTH, MAP_HEIGHT);
 
@@ -211,7 +211,7 @@ Game._generateMap = function() {
             this.level.setLoc(x, y, new Location(x, y, TERRAIN_OUTSIDE, []));
         } else {
             this.level.setLoc(x, y, new Location(x, y, TERRAIN_FLOOR, []));
-            freecells.push(key);
+            this.freecells.push(key);
         }
  
     }
@@ -237,7 +237,7 @@ Game._generateMap = function() {
     var addDoor = function(x, y) {
         if (Math.floor(ROT.RNG.getUniform() * 10) > 6) {
             Game.level.setLoc(x, y, new Location(x, y, TERRAIN_DOOR, []));
-            delete freecells[x + "," + y];
+            delete Game.freecells[x + "," + y];
         }
     }
 
@@ -248,9 +248,9 @@ Game._generateMap = function() {
         room.getDoors(addDoor);
     }
 
-    this._generatePrizes(this.level, freecells);
-    this._createPlayer(this.level, freecells);
-    this._generatePaul(this.level, freecells);    
+    this._generatePrizes(this.level, this.freecells);
+    this._createPlayer(this.level, this.freecells);
+    this._generatePaul(this.level, this.freecells);    
 
     this.top = this.player._y - (DISPLAY_HEIGHT / 2);
     this.left = this.player._x - (DISPLAY_WIDTH / 2);

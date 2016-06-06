@@ -28,9 +28,11 @@ Player.prototype.handleEvent = function(e) {
     var code = e.keyCode;
 //    if (code == ROT.VK_QUESTION_MARK) {
     if (code == ROT.VK_SLASH && e.shiftKey) {
+        new Message("", COLOR_INFO);
         new Message("Commands:", COLOR_INFO);
         new Message("m - switch between tiles and ASCII", COLOR_INFO);
         new Message("g - get item", COLOR_INFO);
+        new Message("", COLOR_INFO);
     }
 
     if (code == 12) {
