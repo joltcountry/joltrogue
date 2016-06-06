@@ -8,7 +8,7 @@ Game.startGame = function(e) {
     Game._createDisplays();
     Game._generateMap();   
     new Message("Welcome to JOLTROGUE.  Please, enjoy the dungeon...", COLOR_HAPPY);
-    new Message("(Press '?' for a list of commands.)", COLOR_INFO)
+    new Message("(Press '?' for help.)", COLOR_INFO)
     Game._refresh();
     scheduler = new ROT.Scheduler.Simple();
     scheduler.add(Game.player, true);
@@ -20,8 +20,8 @@ Game.startGame = function(e) {
 
 Game.renderStart = function() {
 test();
-//Game.startGame();
-//return;
+Game.startGame();
+return;
     DISPLAY_HEIGHT = 44;
     DISPLAY_WIDTH = 98;
     Game.display = new ROT.Display({width: DISPLAY_WIDTH, height: DISPLAY_HEIGHT});

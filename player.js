@@ -26,14 +26,6 @@ Player.prototype.handleEvent = function(e) {
     keyMap[36] = 7;
 
     var code = e.keyCode;
-//    if (code == ROT.VK_QUESTION_MARK) {
-    if (code == ROT.VK_SLASH && e.shiftKey) {
-        new Message("", COLOR_INFO);
-        new Message("Commands:", COLOR_INFO);
-        new Message("m - switch between tiles and ASCII", COLOR_INFO);
-        new Message("g - get item", COLOR_INFO);
-        new Message("", COLOR_INFO);
-    }
 
     if (code == 12) {
         Game._refresh();
@@ -48,17 +40,59 @@ Player.prototype.handleEvent = function(e) {
         Game._refresh();
     }
 
-    if (code == 73) {
+    if (code == ROT.VK_SLASH && e.shiftKey) {
 
-        var info = new ROT.Display({width: 40, height: 20});
+        window.removeEventListener("keydown", this);
+        var info = new ROT.Display({width: 65, height: 25});
         //style="border-style: solid; border-width: 3px; border-color:#99f";
-        info.getContainer().style="position:relative; top: -400px; border-style: solid; border-width: 1; border-color: #ffffff; float:top;";
-
-        document.getElementById("thegame").appendChild(info.getContainer());
-
-        info.drawText(5,5, "This is an info tab.", "#fff");
+        document.getElementById("info").appendChild(info.getContainer());
+        document.getElementById("info").style.border="4px double #00ff00";
+        info.drawText(5,2, "Commands:", "#0f0");
+        info.drawText(5,4, "g - get item", "#0f0");
+        info.drawText(5,5, "m - switch between tiled and ASCII modes", "#0f0");
+        info.drawText(5,6, "a - about JOLTROGUE");
+        info.drawText(5,7, "? - this help screen");
+        info.drawText(5,9, "Aaaand that's about it.", "#0f0");
+        info.drawText(43,23, "(Hit ESC to go back)");
+        window.addEventListener("keydown", function(e) {
+            if (e.keyCode == ROT.VK_ESCAPE) {
+                while (document.getElementById("info").hasChildNodes()) {
+                    document.getElementById("info").removeChild(document.getElementById("info").lastChild);
+                }
+                document.getElementById("info").style.border="";
+                window.removeEventListener("keydown", this);
+                Game.engine.unlock();
+            }
+        });
+        return;
 
     }
+
+    if (code == ROT.VK_A) {
+
+        window.removeEventListener("keydown", this);
+        var info = new ROT.Display({width: 65, height: 25});
+        //style="border-style: solid; border-width: 3px; border-color:#99f";
+        document.getElementById("info").appendChild(info.getContainer());
+        document.getElementById("info").style.border="4px double #00ff00";
+        info.drawText(5,2, "%c{#0f0}JOLTROGUE is a JOLT COUNTRY GAMES production.");
+        info.drawText(5,4, "%c{#0f0}Ben Parrish%c{#cc9} - Lead Developer");
+        info.drawText(5,5, "%c{#0f0}Robb Sherwin%c{#cc9} - Tile Specialist");
+        info.drawText(5,6, "%c{#0f0}Paul Robinson%c{#cc9} - The Man Who Made It All Possible");
+        info.drawText(43,23, "(Hit ESC to go back)");
+        window.addEventListener("keydown", function(e) {
+            if (e.keyCode == ROT.VK_ESCAPE) {
+                while (document.getElementById("info").hasChildNodes()) {
+                    document.getElementById("info").removeChild(document.getElementById("info").lastChild);
+                }
+                document.getElementById("info").style.border="";
+                window.removeEventListener("keydown", this);
+                Game.engine.unlock();
+            }
+        });
+        return;
+
+    }    
 
     if (code == ROT.VK_G && Game.level.getLoc(this._x, this._y).hasItem(ITEM_PRIZE)) {
         Game.level.getLoc(this._x, this._y).removeItem(ITEM_PRIZE);
