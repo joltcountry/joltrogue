@@ -59,7 +59,7 @@ Game._createDisplays = function() {
         };
     } else {
         DISPLAY_WIDTH = 98;
-        DISPLAY_HEIGHT = 38;
+        DISPLAY_HEIGHT = 32;
         options = {
             bg: "#012",
             tileWidth: 23,
@@ -86,13 +86,26 @@ Game._createDisplays = function() {
         document.getElementById("thegame").removeChild(document.getElementById("thegame").lastChild);
     }
 
+    while (document.getElementById("messages").hasChildNodes()) {
+        document.getElementById("messages").removeChild(document.getElementById("messages").lastChild);
+    }
+
+    while (document.getElementById("stats").hasChildNodes()) {
+        document.getElementById("stats").removeChild(document.getElementById("stats").lastChild);
+    }
+
     Game.display = new ROT.Display(options);
-    Game.display2 = new ROT.Display({width: 98, height: 5});
+    Game.messageDisplay = new ROT.Display({width: 98, height: 10, fontSize: 12});
+    Game.statsDisplay = new ROT.Display({width: 31, height: 10, fontSize: 12});
     Game.display.getContainer().style="border-style: groove; border-width: 3px; border-color:#99f;";
-    Game.display2.getContainer().style="border-style: solid; border-width: 1px; border-color:#0f0;";
+    //Game.display2.getContainer().style="border-style: solid; border-width: 1px; border-color:#0f0;";
     //style="border-style: solid; border-width: 3px; border-color:#99f";
     document.getElementById("thegame").appendChild(Game.display.getContainer());
-    document.getElementById("thegame").appendChild(Game.display2.getContainer()); 
+    document.getElementById("messages").appendChild(Game.messageDisplay.getContainer()); 
+    document.getElementById("messages").style.border="1px solid #996600";    
+    document.getElementById("stats").appendChild(Game.statsDisplay.getContainer()); 
+    document.getElementById("stats").style.border="1px solid #996600";    
+
 }
 
 Game.prizes = {};
@@ -184,6 +197,7 @@ Game._refresh = function() {
     Game.display.clear();
     Game._drawWholeMap();
     Game._displayMessages();
+    Game._displayStats();
 
     for (var key in this.prizes) {
         var parts = key.split(",");
@@ -393,13 +407,20 @@ Game._findNeighbors = function(level, x, y, terrain) {
 }
 
 Game._displayMessages = function() {
-    this.display2.clear();
+    this.messageDisplay.clear();
     for (i = MESSAGE_HEIGHT - 1; i >= 0; i--) {
         var msgToDisplay = this.messages.length - i - 1;
         if (msgToDisplay >= 0) {
             var row = MESSAGE_HEIGHT - i - 1;
-            this.display2.drawText(0, row, "%c{"+ this.messages[msgToDisplay]._color + "}" + this.messages[msgToDisplay]._str + "%c{}");
+            this.messageDisplay.drawText(1, row, "%c{"+ this.messages[msgToDisplay]._color + "}" + this.messages[msgToDisplay]._str + "%c{}");
         }
     }
+}
+
+Game._displayStats = function() {
+    this.statsDisplay.clear();
+    this.statsDisplay.drawText(2,1,"%c{#0f0}Moves: %c{}" + this.player._moves);
+    this.statsDisplay.drawText(2,2,"%c{#0f0}Prizes collected: %c{}" + this.player._items.length);
+    this.statsDisplay.drawText(2,3,"%c{#0f0}Prizes remaining: %c{}" + this.prizesLeft);
 }
 

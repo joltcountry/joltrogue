@@ -2,6 +2,8 @@ var Player = function(x, y) {
     this._x = x;
     this._y = y;
     this._draw();
+    this._items = [];
+    this._moves = 0;
 }
 
 Player.prototype._draw = function() {
@@ -28,6 +30,7 @@ Player.prototype.handleEvent = function(e) {
     var code = e.keyCode;
 
     if (code == 12) {
+        this._moves++;
         Game._refresh();
         window.removeEventListener("keydown", this);
         Game.engine.unlock();
@@ -43,7 +46,7 @@ Player.prototype.handleEvent = function(e) {
     if (code == ROT.VK_SLASH && e.shiftKey) {
 
         window.removeEventListener("keydown", this);
-        var info = new ROT.Display({width: 65, height: 25});
+        var info = new ROT.Display({width: 65, height: 22});
         //style="border-style: solid; border-width: 3px; border-color:#99f";
         document.getElementById("info").appendChild(info.getContainer());
         document.getElementById("info").style.border="4px double #00ff00";
@@ -71,7 +74,7 @@ Player.prototype.handleEvent = function(e) {
     if (code == ROT.VK_A) {
 
         window.removeEventListener("keydown", this);
-        var info = new ROT.Display({width: 65, height: 25});
+        var info = new ROT.Display({width: 65, height: 22});
         //style="border-style: solid; border-width: 3px; border-color:#99f";
         document.getElementById("info").appendChild(info.getContainer());
         document.getElementById("info").style.border="4px double #00ff00";
@@ -95,12 +98,15 @@ Player.prototype.handleEvent = function(e) {
     }    
 
     if (code == ROT.VK_G && Game.level.getLoc(this._x, this._y).hasItem(ITEM_PRIZE)) {
+        this._moves++;
         Game.level.getLoc(this._x, this._y).removeItem(ITEM_PRIZE);
         Game.prizesLeft--;
         if (Game.prizesLeft == 0) {
             Game._showWin();
         } else {
             new Message("You got a prize!  (" + Game.prizesLeft + " remaining)", COLOR_HAPPY);
+            this._items.push(ITEM_PRIZE);
+            Game._displayStats();
         }
     }
 
@@ -113,6 +119,8 @@ Player.prototype.handleEvent = function(e) {
     if (Game.level.getLoc(newX, newY).getTerrain().blocksMovement()) { 
         return;
     } /* cannot move in this direction */
+
+    this._moves++;
 
     //Game.display.draw(this._x, this._y, ".");
     this._x = newX;

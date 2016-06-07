@@ -22,7 +22,7 @@ Game.renderStart = function() {
 test();
 //Game.startGame();
 //return;
-    DISPLAY_HEIGHT = 44;
+    DISPLAY_HEIGHT = 40;
     DISPLAY_WIDTH = 98;
     Game.display = new ROT.Display({width: DISPLAY_WIDTH, height: DISPLAY_HEIGHT});
     //style="border-style: solid; border-width: 3px; border-color:#99f";
@@ -131,11 +131,17 @@ Game._showWin = function() {
     window.removeEventListener('keydown', Game.player);
     Game.engine.lock();
 
-    DISPLAY_HEIGHT = 13;
+    DISPLAY_HEIGHT = 18;
     DISPLAY_WIDTH = 33;
 
     while (document.getElementById("thegame").hasChildNodes()) {
         document.getElementById("thegame").removeChild(document.getElementById("thegame").lastChild);
+    }  
+    while (document.getElementById("messages").hasChildNodes()) {
+        document.getElementById("messages").removeChild(document.getElementById("messages").lastChild);
+    }  
+    while (document.getElementById("thegame").hasChildNodes()) {
+        document.getElementById("stats").removeChild(document.getElementById("stats").lastChild);
     }  
 
     Game.display = new ROT.Display({width: DISPLAY_WIDTH, height: DISPLAY_HEIGHT, fontSize: 48});
@@ -160,7 +166,7 @@ Game._showLose = function() {
     window.removeEventListener('keydown', Game.player);
     Game.engine.lock();
 
-    DISPLAY_HEIGHT = 13;
+    DISPLAY_HEIGHT = 18;
     DISPLAY_WIDTH = 33;
 
     while (document.getElementById("thegame").hasChildNodes()) {
