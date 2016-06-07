@@ -167,7 +167,6 @@ Paul.prototype.act = function() {
 
         while (Game.level.getLoc(newX, newY).getTerrain().blocksMovement()) { 
             if (Math.floor(ROT.RNG.getUniform()*3) == 1) {
-                new Message("Paul slams his wheelchair into the wall, breaking an Android tablet.", COLOR_INFO);
                 Game.engine.unlock();                
                 return;
             }
