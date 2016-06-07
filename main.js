@@ -58,8 +58,8 @@ Game._createDisplays = function() {
             height: DISPLAY_HEIGHT
         };
     } else {
-        DISPLAY_WIDTH = 98;
-        DISPLAY_HEIGHT = 32;
+        DISPLAY_WIDTH = 97;
+        DISPLAY_HEIGHT = 38;
         options = {
             bg: "#012",
             tileWidth: 23,
@@ -78,8 +78,8 @@ Game._createDisplays = function() {
     }
 
     if (this.player) {
-        this.top = this.player._y - (DISPLAY_HEIGHT / 2);
-        this.left = this.player._x - (DISPLAY_WIDTH / 2);
+        this.top = this.player._y - Math.floor(DISPLAY_HEIGHT / 2);
+        this.left = this.player._x - Math.floor(DISPLAY_WIDTH / 2);
     }
 
     while (document.getElementById("thegame").hasChildNodes()) {

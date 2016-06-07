@@ -131,7 +131,7 @@ Game._showWin = function() {
     window.removeEventListener('keydown', Game.player);
     Game.engine.lock();
 
-    DISPLAY_HEIGHT = 18;
+    DISPLAY_HEIGHT = 13;
     DISPLAY_WIDTH = 33;
 
     while (document.getElementById("thegame").hasChildNodes()) {
@@ -139,9 +139,11 @@ Game._showWin = function() {
     }  
     while (document.getElementById("messages").hasChildNodes()) {
         document.getElementById("messages").removeChild(document.getElementById("messages").lastChild);
+        document.getElementById("messages").style.border="";
     }  
-    while (document.getElementById("thegame").hasChildNodes()) {
+    while (document.getElementById("stats").hasChildNodes()) {
         document.getElementById("stats").removeChild(document.getElementById("stats").lastChild);
+        document.getElementById("stats").style.border="";
     }  
 
     Game.display = new ROT.Display({width: DISPLAY_WIDTH, height: DISPLAY_HEIGHT, fontSize: 48});
@@ -166,11 +168,19 @@ Game._showLose = function() {
     window.removeEventListener('keydown', Game.player);
     Game.engine.lock();
 
-    DISPLAY_HEIGHT = 18;
+    DISPLAY_HEIGHT = 13;
     DISPLAY_WIDTH = 33;
 
     while (document.getElementById("thegame").hasChildNodes()) {
         document.getElementById("thegame").removeChild(document.getElementById("thegame").lastChild);
+    }  
+    while (document.getElementById("messages").hasChildNodes()) {
+        document.getElementById("messages").removeChild(document.getElementById("messages").lastChild);
+        document.getElementById("messages").style.border="";
+    }  
+    while (document.getElementById("stats").hasChildNodes()) {
+        document.getElementById("stats").removeChild(document.getElementById("stats").lastChild);
+        document.getElementById("stats").style.border="";
     }  
 
     Game.display = new ROT.Display({width: DISPLAY_WIDTH, height: DISPLAY_HEIGHT, fontSize: 48});
