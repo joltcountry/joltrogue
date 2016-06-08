@@ -16,7 +16,7 @@ Game._createDisplay = function() {
     DISPLAY_WIDTH = 97;
     DISPLAY_HEIGHT = 38;
     options = {
-        bg: "#003",
+        bg: "#000",
         width: DISPLAY_WIDTH,
         height: DISPLAY_HEIGHT
     };
@@ -186,7 +186,7 @@ Game._drawMap = function() {
                         color = items[item].getDarkColor();
                     }
                     this.display.draw(x, y, dispChar, color, backColor);
-                } 
+                }
             }
         }
     }
