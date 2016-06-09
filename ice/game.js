@@ -71,34 +71,19 @@ Game._digger = null;
 
 Game._generateMap = function() {
     //this._digger = new ROT.Map.Uniform(MAP_WIDTH,MAP_HEIGHT, { roomDugPercentage:.2, roomWidth:[3,20], roomHeight:[3,20], corridorLength:[3, 20]});
-    this._digger = new ROT.Map.Arena(MAP_WIDTH,MAP_HEIGHT, { connected: true });
+    //this._digger = new ROT.Map.Arena(MAP_WIDTH,MAP_HEIGHT, { connected: true });
 
     this.level = new Level(MAP_WIDTH, MAP_HEIGHT);
-
-    this._digger.create((function(x, y, wall) {
-        var noise = new ROT.Noise.Simplex();
-        if (wall) {
-            this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
-        } else if ((x <= 1 || y <= 1 || x >= MAP_WIDTH-2 || y >= MAP_HEIGHT-2) && Math.random() < 0.667) {
-            this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
-        } else if ((x <= 2 || y <= 2 || x >= MAP_WIDTH-3 || y >= MAP_HEIGHT-3) && Math.random() < 0.333) {
-            this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
-        } else {
-            this.level.setLoc(x, y, new Location(x, y, TERRAIN_FLOOR, []));
-            var key = x + "," + y;            
-            this.freecells.push(key);
-        }
-    }).bind(this));
-
     var offset = 4;
     var numGen = 5;
-    var gen = new ROT.Map.Cellular(MAP_WIDTH - offset*2, MAP_HEIGHT - offset*2, { connected: true });
+    var gen = new ROT.Map.Cellular(MAP_WIDTH, MAP_HEIGHT, { connected: true });
+//    var gen = new ROT.Map.Cellular(MAP_WIDTH - offset*2, MAP_HEIGHT - offset*2, { connected: true });
     gen.randomize(0.5);
     for (var i = 0; i < numGen; ++i) {
         gen.create(null);
     }
     gen.create((function(x, y, wall) {
-        x += offset; y += offset;
+//        x += offset; y += offset;
         if (wall) {
             this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
         } else {
@@ -106,7 +91,27 @@ Game._generateMap = function() {
             var key = x + "," + y;            
             this.freecells.push(key);
         }
-    }).bind(this))    
+    }).bind(this))   
+
+    for (var y = 0; y < MAP_HEIGHT; y++) {
+        for (var x = 0; x < MAP_WIDTH; x++) {
+            var noise = new ROT.Noise.Simplex();
+            if (x == 0 || x == MAP_WIDTH - 1 || y == 0 || y == MAP_HEIGHT -1) {
+                this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
+            } else if ((x <= 1 || y <= 1 || x >= MAP_WIDTH-2 || y >= MAP_HEIGHT-2) && Math.random() < 0.667) {
+                this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
+            } else if ((x <= 2 || y <= 2 || x >= MAP_WIDTH-3 || y >= MAP_HEIGHT-3) && Math.random() < 0.333) {
+                this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
+//            } else {
+//                this.level.setLoc(x, y, new Location(x, y, TERRAIN_FLOOR, []));
+//                var key = x + "," + y;            
+//                this.freecells.push(key);
+//            }
+            }
+        }
+    }
+
+ 
 
 
 /* DOORS
