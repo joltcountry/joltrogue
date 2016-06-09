@@ -214,9 +214,9 @@ Game._drawMap = function() {
         var lightPasses = function(x, y) {
             return ((Game.player._x == x && Game.player._y == y) || Game.level[currentLevel].getLoc(x, y) && !Game.level[currentLevel].getLoc(x, y).getTerrain().blocksLOS());
         }
-        var fov = new ROT.FOV.PreciseShadowcasting(lightPasses);
+        var fov = new ROT.FOV.RecursiveShadowcasting(lightPasses);
 
-        fov.compute(Game.player._x, Game.player._y, 15, function(x, y, r, visibility) {
+        fov.compute(Game.player._x, Game.player._y, 10, function(x, y, r, visibility) {
             visible[x+","+y]=true;
         });   
     }
