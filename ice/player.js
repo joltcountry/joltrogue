@@ -1,13 +1,12 @@
 var Player = function(x, y) {
     this._x = x;
     this._y = y;
-    this._draw();
     this._items = [];
     this._moves = 0;
 }
 
-Player.prototype._draw = function() {
-    Game._drawRel(this._x, this._y, "@", "#ff0", "#222");
+Player.prototype.draw = function() {
+    Game.drawRel(this._x, this._y, "@", "#ff0", Game.level[currentLevel].getLoc(this._x, this._y).getTerrain().getDrawBack());
 }
 
 Player.prototype.act = function() {
@@ -34,7 +33,7 @@ Player.prototype.handleEvent = function(e) {
             && Game.level[currentLevel].getSpecial()["downstairs"][1] == this._y) {
             currentLevel++;
             if (!Game.level[currentLevel]) {
-                Game.generateCave(currentLevel);
+                Game.level[currentLevel] = Maps.generateCave(currentLevel);
             }
             this._x = Game.level[currentLevel].getSpecial()["upstairs"][0];
             this._y = Game.level[currentLevel].getSpecial()["upstairs"][1];
