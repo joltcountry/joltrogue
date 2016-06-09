@@ -71,127 +71,43 @@ Game._digger = null;
 
 Game._generateMap = function() {
     //this._digger = new ROT.Map.Uniform(MAP_WIDTH,MAP_HEIGHT, { roomDugPercentage:.2, roomWidth:[3,20], roomHeight:[3,20], corridorLength:[3, 20]});
-    this._digger = new ROT.Map.Cellular(MAP_WIDTH,MAP_HEIGHT, { connected: true });
-    this._digger.randomize(0.50);
+    this._digger = new ROT.Map.Arena(MAP_WIDTH,MAP_HEIGHT, { connected: true });
 
     this.level = new Level(MAP_WIDTH, MAP_HEIGHT);
 
-    var digCallback = function(x, y, value) {
-        var key = x + "," + y;
-        if (value) { 
-            this.level.setLoc(x, y, new Location(x, y, TERRAIN_OUTSIDE, []));
+    this._digger.create((function(x, y, wall) {
+        var noise = new ROT.Noise.Simplex();
+        if (wall) {
+            this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
+        } else if ((x <= 1 || y <= 1 || x >= MAP_WIDTH-2 || y >= MAP_HEIGHT-2) && Math.random() < 0.667) {
+            this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
+        } else if ((x <= 2 || y <= 2 || x >= MAP_WIDTH-3 || y >= MAP_HEIGHT-3) && Math.random() < 0.333) {
+            this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
         } else {
             this.level.setLoc(x, y, new Location(x, y, TERRAIN_FLOOR, []));
+            var key = x + "," + y;            
             this.freecells.push(key);
         }
- 
+    }).bind(this));
+
+    var offset = 4;
+    var numGen = 5;
+    var gen = new ROT.Map.Cellular(MAP_WIDTH - offset*2, MAP_HEIGHT - offset*2, { connected: true });
+    gen.randomize(0.5);
+    for (var i = 0; i < numGen; ++i) {
+        gen.create(null);
     }
-
-    /* cells with 1/2 probability */
-
-    /* generate and show four generations */
-    for (var i=0; i<10; i++) {
-        this._digger.create(digCallback.bind(this));
-    }
-
-    var out = Math.floor(ROT.RNG.getUniform() * 3) + 1;
-    for (var x = 0; x < MAP_WIDTH; x++) {
-        for (var y = 0; y < out; y++) { 
-            var key = x + "," + y; 
-            var blockKey = x + "," + y+1;
-            if (this.freecells[blockKey]) {
-                continue;
-            }
-            this.level.setLoc(x, y, new Location(x, y, TERRAIN_OUTSIDE, []));
-            if (this.freecells[key]) {
-                this.freecells.splice(key, 1)[0];
-            }
+    gen.create((function(x, y, wall) {
+        x += offset; y += offset;
+        if (wall) {
+            this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
+        } else {
+            this.level.setLoc(x, y, new Location(x, y, TERRAIN_FLOOR, []));
+            var key = x + "," + y;            
+            this.freecells.push(key);
         }
-        if (ROT.RNG.getPercentage() > 70) {
-            var newout = out + Math.floor(ROT.RNG.getUniform() * 3) - 1;
-            if (newout > 0 && newout < 4) {
-                out = newout;
-            }
-        }
-    }
+    }).bind(this))    
 
-    var out = Math.floor(ROT.RNG.getUniform() * 3) + 1;
-    for (var x = 0; x < MAP_WIDTH; x++) {
-        for (var y = MAP_HEIGHT - out; y < MAP_HEIGHT; y++) {
-            var key = x + "," + y;
-            var blockKey = x + "," + y-1;
-            if (this.freecells[blockKey]) {
-                continue;
-            }
-            this.level.setLoc(x, y, new Location(x, y, TERRAIN_OUTSIDE, []));
-            if (this.freecells[key]) {
-                this.freecells.splice(key, 1)[0];
-            }
-        }
-        if (ROT.RNG.getPercentage() > 70) {
-            var newout = out + Math.floor(ROT.RNG.getUniform() * 3) - 1;
-            if (newout > 0 && newout < 4) {
-                out = newout;
-            }
-        }
-    }
-
-    var out = Math.floor(ROT.RNG.getUniform() * 3) + 1;
-    for (var y = 0; y < MAP_HEIGHT; y++) {
-        for (var x = 0; x < out; x++) { 
-            var key = x + "," + y; 
-            var blockKey = x+1 + "," + y;
-            if (this.freecells[blockKey]) {
-                continue;
-            }
-            this.level.setLoc(x, y, new Location(x, y, TERRAIN_OUTSIDE, []));
-            if (this.freecells[key]) {
-                this.freecells.splice(key, 1)[0];
-            }
-        }
-        if (ROT.RNG.getPercentage() > 70) {
-            var newout = out + Math.floor(ROT.RNG.getUniform() * 3) - 1;
-            if (newout > 0 && newout < 4) {
-                out = newout;
-            }
-        }
-    }
-
-    var out = Math.floor(ROT.RNG.getUniform() * 3) + 1;
-    for (var y = 0; y < MAP_HEIGHT; y++) {
-        for (var x = MAP_WIDTH - out; x < MAP_WIDTH; x++) {
-            var key = x + "," + y;
-            var blockKey = x-1 + "," + y;
-            if (this.freecells[blockKey]) {
-                continue;
-            }
-            this.level.setLoc(x, y, new Location(x, y, TERRAIN_OUTSIDE, []));
-            if (this.freecells[key]) {
-                this.freecells.splice(key, 1)[0];
-            }
-        }
-        if (ROT.RNG.getPercentage() > 70) {
-            var newout = out + Math.floor(ROT.RNG.getUniform() * 3) - 1;
-            if (newout > 0 && newout < 4) {
-                out = newout;
-            }
-        }
-    }
-
-    // determine walls
-
-    for (var y = 0; y < this.level.getHeight(); y++) {
-        for (var x = 0; x < this.level.getWidth(); x++) {
-            if (this.level.getLoc(x, y).getTerrain() == TERRAIN_OUTSIDE) { 
-                var floorNeighbors = this._findNeighbors(this.level, x, y, TERRAIN_FLOOR);
-                if (floorNeighbors > 0) {
-                    this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
-                }
-            }
-        }
-    }
-
-    //////////////////
 
 /* DOORS
 

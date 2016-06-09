@@ -30,6 +30,7 @@ Player.prototype.handleEvent = function(e) {
     var code = e.keyCode;
 
     if (code == 12) {
+        alert(this._x + "," + this._y);
         this._moves++;
         Game.refresh();
         window.removeEventListener("keydown", this);
