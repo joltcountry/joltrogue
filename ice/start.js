@@ -1,8 +1,10 @@
 var gameStarted = false;
 
 Game.startGame = function(e) {
+
     Game._createDisplay();
-    Game._generateMap();   
+    Game.generateCave(currentLevel);   
+
     Game.refresh();
     scheduler = new ROT.Scheduler.Simple();
     scheduler.add(Game.player, true);

@@ -29,6 +29,42 @@ Player.prototype.handleEvent = function(e) {
 
     var code = e.keyCode;
 
+    if (code == ROT.VK_PERIOD && e.shiftKey) {
+        if (Game.level[currentLevel].getSpecial()["downstairs"][0] == this._x
+            && Game.level[currentLevel].getSpecial()["downstairs"][1] == this._y) {
+            currentLevel++;
+            if (!Game.level[currentLevel]) {
+                Game.generateCave(currentLevel);
+            }
+            this._x = Game.level[currentLevel].getSpecial()["upstairs"][0];
+            this._y = Game.level[currentLevel].getSpecial()["upstairs"][1];
+            Game.top = this._y - Math.floor(DISPLAY_HEIGHT / 2);
+            Game.left = this._x - Math.floor(DISPLAY_WIDTH / 2);
+            Game.refresh();
+            window.removeEventListener("keydown", this);
+            Game.engine.unlock();
+        }
+        return;
+
+    }
+
+    if (code == ROT.VK_COMMA && e.shiftKey) {
+
+        if (Game.level[currentLevel].getSpecial()["upstairs"][0] == this._x
+            && Game.level[currentLevel].getSpecial()["upstairs"][1] == this._y) {
+            currentLevel--;
+            this._x = Game.level[currentLevel].getSpecial()["downstairs"][0];
+            this._y = Game.level[currentLevel].getSpecial()["downstairs"][1];
+            Game.top = this._y - Math.floor(DISPLAY_HEIGHT / 2);
+            Game.left = this._x - Math.floor(DISPLAY_WIDTH / 2);
+            Game.refresh();
+            window.removeEventListener("keydown", this);
+            Game.engine.unlock();
+        }
+        return;
+
+    }
+
     if (code == 12) {
         alert(this._x + "," + this._y);
         this._moves++;
@@ -38,9 +74,9 @@ Player.prototype.handleEvent = function(e) {
         return;
     }
 
-    if (code == ROT.VK_G && Game.level.getLoc(this._x, this._y).hasItem(ITEM_PRIZE)) {
+    if (code == ROT.VK_G && Game.this.level[0].getLoc(this._x, this._y).hasItem(ITEM_PRIZE)) {
         this._moves++;
-        Game.level.getLoc(this._x, this._y).removeItem(ITEM_PRIZE);
+        Game.this.level[0].getLoc(this._x, this._y).removeItem(ITEM_PRIZE);
         Game.prizesLeft--;
         if (Game.prizesLeft == 0) {
             Game._showWin();
@@ -56,7 +92,7 @@ Player.prototype.handleEvent = function(e) {
     var newX = this._x + diff[0];
     var newY = this._y + diff[1];
 
-    if (newX < 0 || newX >= MAP_WIDTH || newY < 0 || newY >= MAP_HEIGHT || Game.level.getLoc(newX, newY).getTerrain().blocksMovement()) {
+    if (newX < 0 || newX >= Game.level[currentLevel].getWidth() || newY < 0 || newY >= Game.level[currentLevel].getHeight() || Game.level[currentLevel].getLoc(newX, newY).getTerrain().blocksMovement()) {
         return;
     }
 

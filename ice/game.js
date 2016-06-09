@@ -13,8 +13,8 @@ var Game = {
 }
 
 Game._createDisplay = function() {
-    DISPLAY_WIDTH = 97;
-    DISPLAY_HEIGHT = 38;
+    DISPLAY_WIDTH = 100;
+    DISPLAY_HEIGHT = 50;
     options = {
         bg: "#000",
         width: DISPLAY_WIDTH,
@@ -37,9 +37,12 @@ Game.messages = [];
 Game.player = null;
 Game.paul = null;
 Game.prizesLeft = NUM_PRIZES;
-Game.seen = {};
 Game.engine = null;
-Game.freecells = [];
+
+Game.level = [];
+
+currentLevel = 0;
+
 
 var Message = function(s, c) {
     this._str = s;
@@ -69,51 +72,78 @@ Game.refresh = function() {
 
 Game._digger = null;
 
-Game._generateMap = function() {
+function keyExists(key, search) {
+    if (!search || (search.constructor !== Array && search.constructor !== Object)) {
+        return false;
+    }
+    for (var i = 0; i < search.length; i++) {
+        if (search[i] === key) {
+            return true;
+        }
+    }
+    return key in search;
+}
+
+Game.generateCave = function(lev) {
     //this._digger = new ROT.Map.Uniform(MAP_WIDTH,MAP_HEIGHT, { roomDugPercentage:.2, roomWidth:[3,20], roomHeight:[3,20], corridorLength:[3, 20]});
     //this._digger = new ROT.Map.Arena(MAP_WIDTH,MAP_HEIGHT, { connected: true });
 
-    this.level = new Level(MAP_WIDTH, MAP_HEIGHT);
-    var offset = 4;
+    var freecells = [];
+    var w = MIN_WIDTH + Math.floor(ROT.RNG.getUniform() * (MAP_WIDTH - MIN_WIDTH));
+    var h = MIN_HEIGHT + Math.floor(ROT.RNG.getUniform() * (MAP_HEIGHT - MIN_HEIGHT));
+
+/*
+    while (h > w) {
+        w = MIN_WIDTH + Math.floor(ROT.RNG.getUniform() * (MAP_WIDTH - MIN_WIDTH));
+        h = MIN_HEIGHT + Math.floor(ROT.RNG.getUniform() * (MAP_HEIGHT - MIN_HEIGHT));
+    }
+*/
+    this.level[lev] = new Level(w, h);
     var numGen = 5;
-    var gen = new ROT.Map.Cellular(MAP_WIDTH, MAP_HEIGHT, { connected: true });
+    var gen = new ROT.Map.Cellular(w-2, h-2, { connected: true });
 //    var gen = new ROT.Map.Cellular(MAP_WIDTH - offset*2, MAP_HEIGHT - offset*2, { connected: true });
     gen.randomize(0.5);
     for (var i = 0; i < numGen; ++i) {
         gen.create(null);
     }
-    gen.create((function(x, y, wall) {
-//        x += offset; y += offset;
-        if (wall) {
-            this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
+    gen.create(null)   
+    gen.connect((function(x, y, wall) {
+        x += 1; y += 1;
+        if (!wall) {
+            this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
         } else {
-            this.level.setLoc(x, y, new Location(x, y, TERRAIN_FLOOR, []));
+            this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_FLOOR, []));
             var key = x + "," + y;            
-            this.freecells.push(key);
+            freecells.push(key);
         }
-    }).bind(this))   
+    }).bind(this), 1, null);
 
-    for (var y = 0; y < MAP_HEIGHT; y++) {
-        for (var x = 0; x < MAP_WIDTH; x++) {
+//    var noise = new ROT.Noise.Simplex();
+    for (var y = 0; y < h; y++) {
+        for (var x = 0; x < w; x++) {
             var key = x + "," + y;
-            var noise = new ROT.Noise.Simplex();
-            if (x == 0 || x == MAP_WIDTH - 1 || y == 0 || y == MAP_HEIGHT -1) {
-                this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
-                this.freecells.splice(key,1)[0];
-            } else if ((x <= 1 || y <= 1 || x >= MAP_WIDTH-2 || y >= MAP_HEIGHT-2) && Math.random() < 0.667) {
-                this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
-                this.freecells.splice(key,1)[0];
-            } else if ((x <= 2 || y <= 2 || x >= MAP_WIDTH-3 || y >= MAP_HEIGHT-3) && Math.random() < 0.333) {
-                this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
-                this.freecells.splice(key,1)[0];
-//            } else {
-//                this.level.setLoc(x, y, new Location(x, y, TERRAIN_FLOOR, []));
-//                var key = x + "," + y;            
-//                this.freecells.push(key);
-//            }
+            if (x == 0 || x == w - 1 || y == 0 || y == h -1) {
+                this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
+                freecells.splice(key,1)[0];
             }
         }
     }
+
+//                this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
+//                freecells.splice(key,1)[0];
+//            }
+//             else if ((x <= 1 || y <= 1 || x >= w-2 || y >= h-2) && Math.random() < 0.667) {
+//                this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
+//                freecells.splice(key,1)[0];
+//            } else if ((x <= 2 || y <= 2 || x >= w-3 || y >= h-3) && Math.random() < 0.333) {
+//                this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
+//                freecells.splice(key,1)[0];
+//            } else {
+//                this.level[currentLevel].setLoc(x, y, new Location(x, y, TERRAIN_FLOOR, []));
+//                var key = x + "," + y;            
+//                this.freecells.push(key);
+//            }
+//            }
 
  
 
@@ -122,7 +152,7 @@ Game._generateMap = function() {
 
     var addDoor = function(x, y) {
         if (Math.floor(ROT.RNG.getUniform() * 10) > 6) {
-            Game.level.setLoc(x, y, new Location(x, y, TERRAIN_DOOR, []));
+            Game.level[currentLevel].setLoc(x, y, new Location(x, y, TERRAIN_DOOR, []));
             delete Game.freecells[x + "," + y];
         }
     }
@@ -134,11 +164,42 @@ Game._generateMap = function() {
         room.getDoors(addDoor);
     }
 */
-//    this._generatePrizes(this.level, this.freecells);
-    this._createPlayer(this.level, this.freecells);
-//    this._generatePaul(this.level, this.freecells);    
-//    this._generateMonsters(this.level, this.freecells, 100);    
-    this._generateStairs(this.level, this.freecells);
+//    this._generatePrizes(this.level[currentLevel], this.freecells);
+
+    if (!this.player) {
+        var index = Math.floor(ROT.RNG.getUniform() * freecells.length);
+        var key = freecells.splice(index, 1)[0];
+        var parts = key.split(",");
+        var x = parseInt(parts[0]);
+        var y = parseInt(parts[1]);
+        this.player = new Player(x, y);
+    }
+//    this._generatePaul(this.level[currentLevel], this.freecells);    
+//    this._generateMonsters(this.level[currentLevel], this.freecells, 100);    
+    if (lev < NUM_LEVELS - 1) {
+
+        var index = Math.floor(ROT.RNG.getUniform() * freecells.length);
+        var key = freecells[index];
+        var parts = key.split(",");
+        var x = parseInt(parts[0]);
+        var y = parseInt(parts[1]);
+        freecells.splice(index, 1)[0];
+        this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_DOWNSTAIRS, []));
+        this.level[lev].getSpecial()["downstairs"] = [x,y];
+
+    }
+
+    if (lev > 0) {
+        var index = Math.floor(ROT.RNG.getUniform() * freecells.length);
+        var key = freecells[index];
+        var parts = key.split(",");
+        var x = parseInt(parts[0]);
+        var y = parseInt(parts[1]);
+
+        freecells.splice(index, 1)[0];
+        this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_UPSTAIRS, []));
+        this.level[lev].getSpecial()["upstairs"] = [x,y];
+    }
 
     this.top = this.player._y - Math.floor(DISPLAY_HEIGHT / 2);
     this.left = this.player._x - Math.floor(DISPLAY_WIDTH / 2);
@@ -151,7 +212,7 @@ Game._drawMap = function() {
     var visible = {};
     if (Game.player) {
         var lightPasses = function(x, y) {
-            return ((Game.player._x == x && Game.player._y == y) || Game.level.getLoc(x, y) && !Game.level.getLoc(x, y).getTerrain().blocksLOS());
+            return ((Game.player._x == x && Game.player._y == y) || Game.level[currentLevel].getLoc(x, y) && !Game.level[currentLevel].getLoc(x, y).getTerrain().blocksLOS());
         }
         var fov = new ROT.FOV.PreciseShadowcasting(lightPasses);
 
@@ -159,14 +220,16 @@ Game._drawMap = function() {
             visible[x+","+y]=true;
         });   
     }
+    var w = Game.level[currentLevel].getWidth();
+    var h = Game.level[currentLevel].getHeight();
 
     for (var y = 0; y < DISPLAY_HEIGHT; y++) {
         for (var x = 0; x < DISPLAY_WIDTH; x++) {
             var i = this.left + x;
             var j = this.top + y;
             var key = i + "," + j;
-            if (j >= 0 && j < MAP_HEIGHT && i >=0 && i < MAP_WIDTH) {
-                var loc = this.level.getLoc(i,j);
+            if (j >= 0 && j < h && i >=0 && i < w) {
+                var loc = this.level[currentLevel].getLoc(i,j);
                 var items = loc.getItems();
                 var monsters = loc.getMonsters();
                 var color = loc.getTerrain().getDrawColor();
@@ -174,7 +237,7 @@ Game._drawMap = function() {
 
                 if (visible[key]) {
                     var dispChar = loc.getTerrain().getDrawChar();
-                    this.seen[key] = true;
+                    Game.level[currentLevel].seen[key] = true;
                     for (var item = 0; item < items.length; item++) {
                         dispChar = (items[item].getDrawChar());
                         color = items[item].getDrawColor();
@@ -186,7 +249,7 @@ Game._drawMap = function() {
                         }
                     }
                     this.display.draw(x, y, dispChar, color, backColor);
-                } else if (this.seen[key]) {
+                } else if (Game.level[currentLevel].seen[key]) {
                     var dispChar = loc.getTerrain().getDrawChar();
                     color = loc.getTerrain().getDarkColor();
                     backColor = loc.getTerrain().getDarkBack();                    
@@ -200,10 +263,6 @@ Game._drawMap = function() {
         }
     }
 
-    if (Game.paul) {
-
-    }
-
 }
 
 Game._generatePrizes = function(level, freeCells) {
@@ -214,7 +273,7 @@ Game._generatePrizes = function(level, freeCells) {
         var x = parseInt(parts[0]);
         var y = parseInt(parts[1]);
 
-        this.level.getLoc(x, y).addItem(ITEM_PRIZE);
+        this.level[currentLevel].getLoc(x, y).addItem(ITEM_PRIZE);
     }
 };
 
@@ -276,15 +335,30 @@ Game._generatePaul = function(level,freeCells) {
     this.paul = new Paul(x, y);
 };
 
-Game._generateStairs = function(level,freeCells) {
-    var index = Math.floor(ROT.RNG.getUniform() * freeCells.length);
-    var key = freeCells[index];
-    var parts = key.split(",");
-    var x = parseInt(parts[0]);
-    var y = parseInt(parts[1]);
+Game._generateStairs = function(lev,freeCells) {
+    var level = Game.level[lev];
 
-    freeCells.splice(index, 1)[0];
-    level.setLoc(x, y, new Location(x, y, TERRAIN_DOWNSTAIRS, []));
+    if (currentLevel < NUM_LEVELS - 1) {
+        var index = Math.floor(ROT.RNG.getUniform() * freeCells.length);
+        var key = freeCells[index];
+        var parts = key.split(",");
+        var x = parseInt(parts[0]);
+        var y = parseInt(parts[1]);
+
+        freeCells.splice(index, 1)[0];
+        level.setLoc(x, y, new Location(x, y, TERRAIN_DOWNSTAIRS, []));
+    }
+
+    if (currentLevel > 0) {
+        var index = Math.floor(ROT.RNG.getUniform() * freeCells.length);
+        var key = freeCells[index];
+        var parts = key.split(",");
+        var x = parseInt(parts[0]);
+        var y = parseInt(parts[1]);
+
+        freeCells.splice(index, 1)[0];
+        level.setLoc(x, y, new Location(x, y, TERRAIN_UPSTAIRS, []));
+    }
 
 /*
     var diffx = Math.abs(Game.player._x - x);
@@ -311,7 +385,7 @@ Game._findNeighbors = function(level, x, y, terrain) {
     for (j = y-1; j <= y+1; j++) {
         for (i = x-1; i <= x+1; i++) {
             if (j == y && i == x) continue;
-            if (i >= 0 && i < MAP_WIDTH && j >= 0 && j < MAP_HEIGHT) {
+            if (i >= 0 && i < Game.level[currentLevel].getWidth() && j >= 0 && j < Game.level[currentLevel].height) {
                 var thisTerrain = level.getLoc(i, j).getTerrain();
                 if (thisTerrain == terrain) {
                     neighbors++;
