@@ -13,12 +13,13 @@ var Game = {
 }
 
 Game._createDisplay = function() {
-    DISPLAY_WIDTH = 100;
-    DISPLAY_HEIGHT = 50;
+    DISPLAY_WIDTH = 60;
+    DISPLAY_HEIGHT = 30;
     options = {
         bg: "#000",
         width: DISPLAY_WIDTH,
-        height: DISPLAY_HEIGHT
+        height: DISPLAY_HEIGHT,
+        fontSize: 24
     };
 
     if (this.player) {
@@ -84,6 +85,84 @@ function keyExists(key, search) {
     return key in search;
 }
 
+Game.generateDungeon = function(lev) {
+
+    var freecells = [];
+    var w = MIN_WIDTH + Math.floor(ROT.RNG.getUniform() * (MAP_WIDTH - MIN_WIDTH));
+    var h = MIN_HEIGHT + Math.floor(ROT.RNG.getUniform() * (MAP_HEIGHT - MIN_HEIGHT));
+    this._digger = new ROT.Map.Uniform(w, h, { roomDugPercentage:.2, roomWidth:[3,20], roomHeight:[3,20], corridorLength:[3, 20]});
+
+    this.level[lev] = new Level(w, h);
+
+    var digCallback = function(x, y, value) {
+        var key = x + "," + y;
+        
+        if (value) { 
+            this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
+        } else {
+            this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_FLOOR, []));
+            freecells.push(key);
+        }
+
+    }
+
+    this._digger.create(digCallback.bind(this));
+
+    var addDoor = function(x, y) {
+        if (Math.floor(ROT.RNG.getUniform() * 10) > 6) {
+            Game.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_DOOR, []));
+            delete freecells[x + "," + y];
+        }
+    }
+
+    var rooms = this._digger.getRooms();
+
+    for (var i=0; i<rooms.length; i++) {
+        var room = rooms[i];
+        room.getDoors(addDoor);
+    }
+
+    if (!this.player) {
+        var index = Math.floor(ROT.RNG.getUniform() * freecells.length);
+        var key = freecells.splice(index, 1)[0];
+        var parts = key.split(",");
+        var x = parseInt(parts[0]);
+        var y = parseInt(parts[1]);
+        this.player = new Player(x, y);
+    }
+//    this._generatePaul(this.level[currentLevel], this.freecells);    
+//    this._generateMonsters(this.level[currentLevel], this.freecells, 100);    
+    if (lev < NUM_LEVELS - 1) {
+
+        var index = Math.floor(ROT.RNG.getUniform() * freecells.length);
+        var key = freecells[index];
+        var parts = key.split(",");
+        var x = parseInt(parts[0]);
+        var y = parseInt(parts[1]);
+        freecells.splice(index, 1)[0];
+        this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_DOWNSTAIRS, []));
+        this.level[lev].getSpecial()["downstairs"] = [x,y];
+
+    }
+
+    if (lev > 0) {
+        var index = Math.floor(ROT.RNG.getUniform() * freecells.length);
+        var key = freecells[index];
+        var parts = key.split(",");
+        var x = parseInt(parts[0]);
+        var y = parseInt(parts[1]);
+
+        freecells.splice(index, 1)[0];
+        this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_UPSTAIRS, []));
+        this.level[lev].getSpecial()["upstairs"] = [x,y];
+    }
+
+    this.top = this.player._y - Math.floor(DISPLAY_HEIGHT / 2);
+    this.left = this.player._x - Math.floor(DISPLAY_WIDTH / 2);
+
+
+}
+
 Game.generateCave = function(lev) {
     //this._digger = new ROT.Map.Uniform(MAP_WIDTH,MAP_HEIGHT, { roomDugPercentage:.2, roomWidth:[3,20], roomHeight:[3,20], corridorLength:[3, 20]});
     //this._digger = new ROT.Map.Arena(MAP_WIDTH,MAP_HEIGHT, { connected: true });
@@ -110,9 +189,9 @@ Game.generateCave = function(lev) {
     gen.connect((function(x, y, wall) {
         x += 1; y += 1;
         if (!wall) {
-            this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
+            this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_ICEWALL, []));
         } else {
-            this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_FLOOR, []));
+            this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_ICEFLOOR, []));
             var key = x + "," + y;            
             freecells.push(key);
         }
@@ -123,7 +202,7 @@ Game.generateCave = function(lev) {
         for (var x = 0; x < w; x++) {
             var key = x + "," + y;
             if (x == 0 || x == w - 1 || y == 0 || y == h -1) {
-                this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
+                this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_ICEWALL, []));
                 freecells.splice(key,1)[0];
             }
         }
@@ -184,7 +263,7 @@ Game.generateCave = function(lev) {
         var x = parseInt(parts[0]);
         var y = parseInt(parts[1]);
         freecells.splice(index, 1)[0];
-        this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_DOWNSTAIRS, []));
+        this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_ICEDOWNSTAIRS, []));
         this.level[lev].getSpecial()["downstairs"] = [x,y];
 
     }
@@ -197,7 +276,7 @@ Game.generateCave = function(lev) {
         var y = parseInt(parts[1]);
 
         freecells.splice(index, 1)[0];
-        this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_UPSTAIRS, []));
+        this.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_ICEUPSTAIRS, []));
         this.level[lev].getSpecial()["upstairs"] = [x,y];
     }
 

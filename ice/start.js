@@ -3,7 +3,7 @@ var gameStarted = false;
 Game.startGame = function(e) {
 
     Game._createDisplay();
-    Game.generateCave(currentLevel);   
+    Game.generateDungeon(currentLevel);   
 
     Game.refresh();
     scheduler = new ROT.Scheduler.Simple();
