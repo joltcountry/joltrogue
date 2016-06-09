@@ -86,7 +86,9 @@ function keyExists(key, search) {
     return key in search;
 }
 
-Game.drawStats = function() {}
+Game.drawStats = function() {
+    Game.display.drawText(1, DISPLAY_HEIGHT - 1, "%c{#0f0}Level " + (currentLevel+1));
+}
 
 Game.drawMap = function() {
 
