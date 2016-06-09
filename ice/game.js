@@ -109,7 +109,11 @@ Game.generateDungeon = function(lev) {
     this._digger.create(digCallback.bind(this));
 
     var addDoor = function(x, y) {
-        if (Math.floor(ROT.RNG.getUniform() * 10) > 6) {
+        if (Math.floor(ROT.RNG.getUniform() * 10) > 7 &&
+            ((Game.level[lev].getLoc(x-1, y).getTerrain() == TERRAIN_WALL &&
+                 Game.level[lev].getLoc(x+1, y).getTerrain() == TERRAIN_WALL) ||
+                (Game.level[lev].getLoc(x, y-1).getTerrain() == TERRAIN_WALL &&
+                 Game.level[lev].getLoc(x, y+1).getTerrain() == TERRAIN_WALL))) {
             Game.level[lev].setLoc(x, y, new Location(x, y, TERRAIN_DOOR, []));
             delete freecells[x + "," + y];
         }
