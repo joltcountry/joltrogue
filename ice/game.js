@@ -95,13 +95,17 @@ Game._generateMap = function() {
 
     for (var y = 0; y < MAP_HEIGHT; y++) {
         for (var x = 0; x < MAP_WIDTH; x++) {
+            var key = x + "," + y;
             var noise = new ROT.Noise.Simplex();
             if (x == 0 || x == MAP_WIDTH - 1 || y == 0 || y == MAP_HEIGHT -1) {
                 this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
+                this.freecells.splice(key,1)[0];
             } else if ((x <= 1 || y <= 1 || x >= MAP_WIDTH-2 || y >= MAP_HEIGHT-2) && Math.random() < 0.667) {
                 this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
+                this.freecells.splice(key,1)[0];
             } else if ((x <= 2 || y <= 2 || x >= MAP_WIDTH-3 || y >= MAP_HEIGHT-3) && Math.random() < 0.333) {
                 this.level.setLoc(x, y, new Location(x, y, TERRAIN_WALL, []));
+                this.freecells.splice(key,1)[0];
 //            } else {
 //                this.level.setLoc(x, y, new Location(x, y, TERRAIN_FLOOR, []));
 //                var key = x + "," + y;            
