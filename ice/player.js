@@ -28,6 +28,20 @@ Player.prototype.handleEvent = function(e) {
 
     var code = e.keyCode;
 
+    if (code == 189 && Game.displaySize > 1) {
+        Game.displaySize--;
+        Game._createDisplay();
+        Game.refresh();
+        Game.engine.unlock();
+    }
+
+    if (code == 187 && e.shiftKey && Game.displaySize < 4) {
+        Game.displaySize++;
+        Game._createDisplay();
+        Game.refresh();
+        Game.engine.unlock();
+    }
+
     if (code == ROT.VK_PERIOD && e.shiftKey) {
         if (Game.level[currentLevel].getSpecial()["downstairs"][0] == this._x
             && Game.level[currentLevel].getSpecial()["downstairs"][1] == this._y) {

@@ -6,6 +6,7 @@ var Game = {
     top: null,
     left: null,
     tileSet: null,
+    displaySize: 3,
     init: function() {
         console.log("Firin' up the game");
         Game.startGame();            
@@ -13,13 +14,23 @@ var Game = {
 }
 
 Game._createDisplay = function() {
-    DISPLAY_WIDTH = 60;
-    DISPLAY_HEIGHT = 30;
+    while (document.getElementById("game").hasChildNodes()) {
+        document.getElementById("game").removeChild(document.getElementById("game").lastChild);
+    }
+
+    DISPLAY_WIDTH = 240;
+    DISPLAY_HEIGHT = 120;
+    FONT_SIZE = 6;
+    for (var i = 1; i < Game.displaySize; i++) {
+        DISPLAY_WIDTH /= 2;
+        DISPLAY_HEIGHT /= 2;
+        FONT_SIZE *= 2;
+    }
     options = {
         bg: "#000",
         width: DISPLAY_WIDTH,
         height: DISPLAY_HEIGHT,
-        fontSize: 24
+        fontSize: FONT_SIZE
     };
 
     if (this.player) {
